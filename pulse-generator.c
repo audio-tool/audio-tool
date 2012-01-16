@@ -34,6 +34,13 @@
 #include <time.h>
 #include <signal.h>
 
+/* pcm_wait() not declared in tinyalsa headers... but symbol avail. in lib.
+ * This is cheating... a little.
+ */
+#warning Using pcm_wait(), but it is not part of the public API.
+int pcm_wait(struct pcm *pcm, int timeout);
+
+
 volatile int running = 1;
 
 void sigint_handler(int sig)
@@ -75,9 +82,11 @@ void ivt_lap(struct interval_tracker *it)
             if (elapsed < it->min_ms)
                 it->min_ms = elapsed;
         }
+#if 0
         printf("now=%ld dt=%08u max=%08u min=%08u\n",
                1000000 * (it->now.tv_sec % 100) + it->now.tv_nsec / 1000,
                (unsigned)(elapsed+.5), (unsigned)(it->max_ms+.5), (unsigned)(it->min_ms+.5));
+#endif
     }
     it->last = it->now;
     it->initd = 1;
@@ -183,8 +192,8 @@ void play_pulses(struct play_pulses_params *params)
         config.format = PCM_FORMAT_S32_LE;
     else if (params->bits == 16)
         config.format = PCM_FORMAT_S16_LE;
-    config.start_threshold = 0;
-    config.stop_threshold = 0;
+    config.start_threshold = params->period_size;
+    config.stop_threshold = params->period_size * params->period_count;
     config.silence_threshold = 0;
 
     pcm = pcm_open(params->card, params->device, PCM_OUT, &config);
@@ -194,7 +203,8 @@ void play_pulses(struct play_pulses_params *params)
         return;
     }
 
-    size = pcm_get_buffer_size(pcm);
+    size = pcm_frames_to_bytes(pcm, pcm_get_buffer_size(pcm));
+    printf("size = %d\n", size);
     buffer = malloc(size);
     if (!buffer) {
         fprintf(stderr, "Unable to allocate %d bytes\n", size);
@@ -209,22 +219,25 @@ void play_pulses(struct play_pulses_params *params)
     int k, stat;
     int interrupt_tol = 20 + 1000000 * params->period_size / params->rate;
     int pulse_position = params->pulse_position;
+    int period_bytes = pcm_frames_to_bytes(pcm, params->period_size);
+    char pulse_byte = 0x1f;
     pcm_start(pcm);
     do {
         memset(buffer, 0, size);
-        num_read = 0;
-        num_read = size;
+        num_read = period_bytes;
         if (pulse_position & PULSE_AT_FRONT) {
             for( k = 0 ; (k < size) && (k < 4) ; ++k ) {
-                buffer[k] = 0x7f;
+                buffer[k] = pulse_byte;
             }
         }
         if (pulse_position & PULSE_AT_MIDDLE) {
-            /* not supported */
+            for( k = (period_bytes/2) - 4 ; (k < size) && (k < (period_bytes/2)) ; ++k ) {
+                buffer[k] = pulse_byte;
+            }
         }
         if (pulse_position & PULSE_AT_END) {
-            for( k = size-1 ; (k > 0) && (k >= (size-4)) ; --k ) {
-                buffer[k] = 0x7f;
+            for( k = period_bytes-1 ; (k > 0) && (k >= (period_bytes-4)) ; --k ) {
+                buffer[k] = pulse_byte;
             }
         }
 
@@ -239,7 +252,6 @@ void play_pulses(struct play_pulses_params *params)
                 fprintf(stderr, "Error playing sample\n");
                 num_read = 0;
             }
-            num_read = 1;
             break;
 	case -EINTR:
             printf("wait was interrupted\n");
