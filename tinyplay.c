@@ -56,7 +56,7 @@ struct wav_header {
 
 void play_sample(FILE *file, unsigned int card, unsigned int device, unsigned int channels,
                  unsigned int rate, unsigned int bits, unsigned int period_size,
-                 unsigned int period_count);
+                 unsigned int period_count, unsigned int duration);
 
 int main(int argc, char **argv)
 {
@@ -66,10 +66,11 @@ int main(int argc, char **argv)
     unsigned int card = 0;
     unsigned int period_size = 1024;
     unsigned int period_count = 4;
+    unsigned int duration = -1;
 
     if (argc < 2) {
         fprintf(stderr, "Usage: %s file.wav [-D card] [-d device] [-p period_size]"
-                " [-n n_periods] \n", argv[0]);
+                " [-n n_periods] [-t duration] \n", argv[0]);
         return 1;
     }
 
@@ -102,6 +103,11 @@ int main(int argc, char **argv)
             if (*argv)
                 card = atoi(*argv);
         }
+	if (strcmp(*argv, "-t") == 0) {
+            argv++;
+            if (*argv)
+                duration = atoi(*argv);
+        }
         if (*argv)
             argv++;
     }
@@ -119,7 +125,7 @@ int main(int argc, char **argv)
     }
 
     play_sample(file, card, device, header.num_channels, header.sample_rate,
-                header.bits_per_sample, period_size, period_count);
+                header.bits_per_sample, period_size, period_count, duration);
 
     fclose(file);
 
@@ -128,13 +134,15 @@ int main(int argc, char **argv)
 
 void play_sample(FILE *file, unsigned int card, unsigned int device, unsigned int channels,
                  unsigned int rate, unsigned int bits, unsigned int period_size,
-                 unsigned int period_count)
+                 unsigned int period_count, unsigned int duration)
 {
     struct pcm_config config;
     struct pcm *pcm;
     char *buffer;
     int size;
     int num_read;
+    unsigned long requested;
+    unsigned long written = 0;
 
     config.channels = channels;
     config.rate = rate;
@@ -164,6 +172,8 @@ void play_sample(FILE *file, unsigned int card, unsigned int device, unsigned in
         return;
     }
 
+    requested = pcm_frames_to_bytes(pcm, rate * duration);
+
     printf("Playing sample: %u ch, %u hz, %u bit\n", channels, rate, bits);
 
     do {
@@ -174,7 +184,8 @@ void play_sample(FILE *file, unsigned int card, unsigned int device, unsigned in
                 break;
             }
         }
-    } while (num_read > 0);
+        written += num_read;
+    } while ((num_read > 0) && (written < requested));
 
     free(buffer);
     pcm_close(pcm);
