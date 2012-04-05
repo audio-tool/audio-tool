@@ -60,7 +60,7 @@ int capturing = 1;
 unsigned int capture_sample(FILE *file, unsigned int card, unsigned int device,
                             unsigned int channels, unsigned int rate,
                             unsigned int bits, unsigned int period_size,
-                            unsigned int period_count);
+                            unsigned int period_count, unsigned int duration);
 
 void sigint_handler(int sig)
 {
@@ -79,10 +79,11 @@ int main(int argc, char **argv)
     unsigned int frames;
     unsigned int period_size = 1024;
     unsigned int period_count = 4;
+    unsigned int duration = -1;
 
     if (argc < 2) {
         fprintf(stderr, "Usage: %s file.wav [-D card] [-d device] [-c channels] "
-                "[-r rate] [-b bits] [-p period_size] [-n n_periods]\n", argv[0]);
+                "[-r rate] [-b bits] [-p period_size] [-n n_periods] [-t duration]\n", argv[0]);
         return 1;
     }
 
@@ -123,6 +124,10 @@ int main(int argc, char **argv)
             argv++;
             if (*argv)
                 period_count = atoi(*argv);
+        } else if (strcmp(*argv, "-t") == 0) {
+            argv++;
+            if (*argv)
+                duration = atoi(*argv);
         }
         if (*argv)
             argv++;
@@ -148,7 +153,7 @@ int main(int argc, char **argv)
     signal(SIGINT, sigint_handler);
     frames = capture_sample(file, card, device, header.num_channels,
                             header.sample_rate, header.bits_per_sample,
-                            period_size, period_count);
+                            period_size, period_count, duration);
     printf("Captured %d frames\n", frames);
 
     /* write header now all information is known */
@@ -164,13 +169,14 @@ int main(int argc, char **argv)
 unsigned int capture_sample(FILE *file, unsigned int card, unsigned int device,
                             unsigned int channels, unsigned int rate,
                             unsigned int bits, unsigned int period_size,
-                            unsigned int period_count)
+                            unsigned int period_count, unsigned int duration)
 {
     struct pcm_config config;
     struct pcm *pcm;
     char *buffer;
     unsigned int size;
     unsigned int bytes_read = 0;
+    unsigned long requested;
 
     config.channels = channels;
     config.rate = rate;
@@ -191,7 +197,7 @@ unsigned int capture_sample(FILE *file, unsigned int card, unsigned int device,
         return 0;
     }
 
-    size = pcm_get_buffer_size(pcm);
+    size = pcm_frames_to_bytes(pcm, pcm_get_buffer_size(pcm));
     buffer = malloc(size);
     if (!buffer) {
         fprintf(stderr, "Unable to allocate %d bytes\n", size);
@@ -200,9 +206,12 @@ unsigned int capture_sample(FILE *file, unsigned int card, unsigned int device,
         return 0;
     }
 
+    requested = pcm_frames_to_bytes(pcm, rate * duration);
+
     printf("Capturing sample: %u ch, %u hz, %u bit\n", channels, rate, bits);
 
-    while (capturing && !pcm_read(pcm, buffer, size)) {
+    while (capturing && (bytes_read < requested) &&
+           !pcm_read(pcm, buffer, size)) {
         if (fwrite(buffer, 1, size, file) != size) {
             fprintf(stderr,"Error capturing sample\n");
             break;
