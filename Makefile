@@ -2,6 +2,7 @@ INC = include
 CFLAGS = -g -O0 -I$(INC) -Wall
 OBJECTS = mixer.o pcm.o
 LIB = libtinyalsa.a
+LINKOPTS := -static
 
 TARGETS := $(LIB) \
 	tinyplay \
@@ -13,16 +14,16 @@ TARGETS := $(LIB) \
 all: $(TARGETS) all_tone_generator
 
 tinyplay: tinyplay.o $(LIB)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+	$(CC) $(LINKOPTS) $(CFLAGS) -o $@ $^ $(LDLIBS)
 
 tinycap: tinycap.o $(LIB)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+	$(CC) $(LINKOPTS) $(CFLAGS) -o $@ $^ $(LDLIBS)
 
 tinymix: tinymix.o $(LIB)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+	$(CC) $(LINKOPTS) $(CFLAGS) -o $@ $^ $(LDLIBS)
 
 pulse-generator: pulse-generator.o $(LIB)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS) -lrt
+	$(CC) $(LINKOPTS) $(CFLAGS) -o $@ $^ $(LDLIBS) -lrt
 
 $(LIB): $(OBJECTS)
 	$(AR) rc $@ $(OBJECTS)
@@ -61,6 +62,7 @@ clean_tone_generator:
 	-rm -f $(TONEGEN_EXE_TARGETS) *.o
 	-rm -f $(TONEGEN_TABLE_TARGETS)
 
+# This program is intended as a build tool, so it's compiled for the host.
 generate-wave-table: generate-wave-table.o
 	$(CC) -o $@ $(TONEGEN_LDFLAGS) $^ $(LDLIBS) -lm
 
@@ -71,7 +73,7 @@ table_%.c: generate-wave-table
 	./generate-wave-table $* $(TONEGEN_WAVE_LENGTH) > $@
 
 tone-generator: tone-generator.o oscillator-table.o
-	$(CC) -o $@ $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) $^ $(TONEGEN_LDLIBS)
+	$(CC) $(LINKOPTS) -o $@ $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) $^ $(TONEGEN_LDLIBS)
 
 tone-generator.o: tone-generator.c $(TONEGEN_TABLE_TARGETS)
 	$(CC) -c -o $@ $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) $<
