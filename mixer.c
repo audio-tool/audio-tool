@@ -35,6 +35,7 @@
 #include <ctype.h>
 
 #include <linux/ioctl.h>
+#include <sys/ioctl.h>
 #define __force
 #define __bitwise
 #define __user
