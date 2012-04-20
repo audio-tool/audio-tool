@@ -87,11 +87,14 @@ int check_wave_tables()
 }
 
 struct tone_generator_config {
+	int card;
+	int device;
 	struct wave_table *wave_table;
 	struct wave_scale wave_scale;
 	struct pcm_config pcm_config;
 	uint32_t duration;
 	int16_t volume; /* binary fraction / USHRT_MAX */
+	uint32_t chan_mask;
 };
 
 int inner_main(struct tone_generator_config config)
@@ -127,7 +130,7 @@ int inner_main(struct tone_generator_config config)
 			pcm_config->period_size,
 			config.wave_scale,
 			pcm_config->channels,
-                        ~0, /* write to all channels */
+			config.chan_mask, /* write to all channels */
 			config.volume);
 		if (pcm_write(pcm,
 			      buf,
@@ -146,7 +149,9 @@ void usage()
 {
 	struct wave_table *ptr;
 
-	printf("Usage: tone-generator <wave_type> <frequency> <duration> <vol_db>\n");
+	printf("Usage: tone-generator <wave_type> <frequency> <duration> <vol_db> [-D card] [-d device] \\\n");
+	printf("                [-p period_size] [-n num_periods] [-r rate] [-c chans] \\\n");
+	printf("                [-m chan_mask] [-t duration_override] \\\n");
 	printf("wave_type:\n");
 	for (ptr=g_wave_tables ; ptr->name ; ++ptr) {
 		printf("    %s\n", ptr->name);
@@ -158,7 +163,11 @@ void usage()
 
 int main(int argc, char* argv[])
 {
-	struct tone_generator_config config;
+	struct tone_generator_config config = {
+		.card = 0,
+		.device = 0,
+		.chan_mask = ~0,
+	};
 	struct pcm_config pcm_config;
 	struct wave_table *ptr, *table;
 	struct wave_scale wave_scale;
@@ -166,7 +175,7 @@ int main(int argc, char* argv[])
 	char *arg_wave_type, *arg_freq, *arg_duration, *arg_voldb;
 	double tmp;
 
-	if (argc != 5) {
+	if (argc < 5) {
 		usage();
 		return 0;
 	}
@@ -187,6 +196,59 @@ int main(int argc, char* argv[])
 	pcm_config.period_count = 4;
 	pcm_config.format = PCM_FORMAT_S16_LE;
 	config.duration = pcm_config.rate * 3;
+
+	argv += 5;
+	while (*argv) {
+		if (strcmp(*argv, "-d") == 0) {
+			argv++;
+			if (*argv)
+				config.device = atoi(*argv);
+		}
+		if (strcmp(*argv, "-D") == 0) {
+			argv++;
+			if (*argv)
+				config.card = atoi(*argv);
+		}
+		if (strcmp(*argv, "-p") == 0) {
+			argv++;
+			if (*argv)
+				pcm_config.period_size = atoi(*argv);
+		}
+		if (strcmp(*argv, "-n") == 0) {
+			argv++;
+			if (*argv)
+				pcm_config.period_count = atoi(*argv);
+		}
+		if (strcmp(*argv, "-r") == 0) {
+			argv++;
+			if (*argv)
+				pcm_config.rate = atoi(*argv);
+		}
+		if (strcmp(*argv, "-c") == 0) {
+			argv++;
+			if (*argv)
+				pcm_config.channels = atoi(*argv);
+		}
+		if (strcmp(*argv, "-t") == 0) {
+			argv++;
+			if (*argv)
+				arg_duration = *argv;
+		}
+		if (strcmp(*argv, "-m") == 0) {
+			argv++;
+			if (*argv) {
+				if (strncmp("0x", *argv, 2) == 0) {
+					config.chan_mask = strtol(*argv, 0, 16);
+				} else if (strncmp("0", *argv, 1) == 0) {
+					config.chan_mask = strtol(*argv, 0, 8);
+				} else {
+					config.chan_mask = atoi(*argv);
+				}
+			}
+		}
+		if (*argv)
+			argv++;
+	}
 
 	for (ptr = g_wave_tables ; ptr->name ; ++ptr) {
 		if (strcmp(arg_wave_type, ptr->name) == 0) {
