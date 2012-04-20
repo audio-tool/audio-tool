@@ -10,7 +10,7 @@ TARGETS := $(LIB) \
 	pulse-generator \
 
 
-all: $(TARGETS)
+all: $(TARGETS) all_tone_generator
 
 tinyplay: tinyplay.o $(LIB)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
@@ -30,5 +30,49 @@ $(LIB): $(OBJECTS)
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
-clean:
+clean: clean_tone_generator
 	-rm *.o $(TARGETS)
+
+##############################################
+##
+## TONE GENERATOR
+##
+##############################################
+
+TONEGEN_CFLAGS := $(CFLAGS)
+TONEGEN_CPPFLAGS := $(CPPFLAGS)
+TONEGEN_LDFLAGS := $(LDFLAGS)
+TONEGEN_LDLIBS := $(LDLIBS) $(LIB) -lm
+
+TONEGEN_WAVE_LENGTH = 2048
+TONEGEN_EXE_TARGETS = generate-wave-table \
+	tone-generator
+TONEGEN_TABLE_TARGETS = table_square.c \
+	table_sine.c \
+	table_triangle.c \
+	table_sawtooth.c
+
+# Note: tone-generator depends on the wave tables, so
+# they appear first in this list rather than writing
+# a rule for each target.
+all_tone_generator: $(TONEGEN_TABLE_TARGETS) $(TONEGEN_EXE_TARGETS)
+
+clean_tone_generator:
+	-rm -f $(TONEGEN_EXE_TARGETS) *.o
+	-rm -f $(TONEGEN_TABLE_TARGETS)
+
+generate-wave-table: generate-wave-table.o
+	$(CC) -o $@ $(TONEGEN_LDFLAGS) $^ $(LDLIBS) -lm
+
+generate-wave-table.o: generate-wave-table.c
+	$(CC) -c -o $@  $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) $<
+
+table_%.c: generate-wave-table
+	./generate-wave-table $* $(TONEGEN_WAVE_LENGTH) > $@
+
+tone-generator: tone-generator.o
+	$(CC) -o $@ $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) $^ $(TONEGEN_LDLIBS)
+
+tone-generator.o: tone-generator.c $(TONEGEN_TABLE_TARGETS)
+	$(CC) -c -o $@ $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) $<
+

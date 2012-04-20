@@ -5,3 +5,9 @@ tinycap
 tinymix
 tinyplay
 pulse-generator
+generate-wave-table
+table_sawtooth.c
+table_sine.c
+table_square.c
+table_triangle.c
+tone-generator
