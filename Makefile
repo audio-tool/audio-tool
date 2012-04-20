@@ -1,5 +1,5 @@
 INC = include
-CFLAGS = -g -O0 -I$(INC)
+CFLAGS = -g -O0 -I$(INC) -Wall
 OBJECTS = mixer.o pcm.o
 LIB = libtinyalsa.a
 
