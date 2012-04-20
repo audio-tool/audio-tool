@@ -1,9 +1,51 @@
-tinyalsa: a small library to interface with ALSA in the Linux kernel
+OMAP audio-tool
+---------------
 
-The aims are:
+The future: There will be an executable called audio-tool that will be
+a swiss-army knife for testing and using audio on OMAP.
 
-- Provide a basic pcm and mixer API
-- If it's not absolutely needed, don't add it to the API
-- Avoid supporting complex and unnecessary operations that could be
-  dealt with at a higher level
+Now: This is a fork of tinyalsa, patched with our UTR-related patches,
+and with two additional tools (pulse-generator and tone-generator).
+
+MANIFEST
+--------
+
+As stated before, the goal is to have ONE binary, 'audio-tool'.  But
+for now we have:
+
+TARGET BINARIES:
+
+    tinymix - An ALSA mixer control program
+    tinyplay - An ALSA playback tool for playing RIFF wave files
+    tinycap - An ALSA capture tool for recording RIFF wave files
+    tone-generator - A tool for generating misc. waveforms
+    pulse-generator - A tool for generating impulses on period boundaries.
+
+HOST BINARIES:
+
+    generate-wave-tables - Generates C-source output with look-up tables
+        for various waveforms.
+
+BUILDING
+--------
+
+The Makefile builds statically linked binaries for the target
+platform.  The binaries for the host platform are usually dynamically
+linked.
+
+To build for the host PC, do this:
+
+   $ make
+
+To build for the target device, do this:
+
+   $ export CROSS_COMPILE=/path/to/arm-none-linux-gnueabi-
+   $ make ARCH=arm
+
+...and push the binaries to the device.
+
+LICENSING
+---------
+
+At the moment, this is a mixture of Apache 2.0 and BSD licensing.
 
