@@ -34,13 +34,6 @@
 #include <time.h>
 #include <signal.h>
 
-/* pcm_wait() not declared in tinyalsa headers... but symbol avail. in lib.
- * This is cheating... a little.
- */
-#warning Using pcm_wait(), but it is not part of the public API.
-int pcm_wait(struct pcm *pcm, int timeout);
-
-
 volatile int running = 1;
 
 void sigint_handler(int sig)
