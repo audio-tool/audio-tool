@@ -38,23 +38,7 @@
 #include <stdint.h>
 #include <limits.h>
 #include <tinyalsa/asoundlib.h>
-
-#define IS_POWER_OF_TWO(x) ((0) == ((x) & ((x)-1)))
-
-struct wave_table {
-	const char* name;
-	uint16_t length; /* Must be a power of two */
-	uint16_t mask;   /* = length - 1 */
-	int16_t *data;
-};
-
-struct wave_scale {
-	uint16_t length;
-	uint16_t sub;       /* sub-frames, binary fraction with
-			       denominator = ((1 << sub_shift) - 1)*/
-	uint16_t sub_den;   /* must be (power of 2)-1 */
-	uint16_t sub_shift; /* denominator shift, sub_den = (1 << sub_shift) - 1 */
-};
+#include "oscillator-table.h"
 
 /* LOAD ALL THE WAVE TABLES
  *
@@ -84,14 +68,6 @@ static int16_t g_table_sawtooth_wave_data[] = {
 #include "table_sawtooth.c"
 };
 
-#define DECLARE_TABLE(t_name, t_data)					\
-	{								\
-		.name = (t_name),					\
-		.length = sizeof(t_data) / sizeof(int16_t),		\
-		.mask = (sizeof(t_data)/sizeof(int16_t)) - 1,		\
-		.data = (t_data),					\
-	}
-
 static struct wave_table g_wave_tables[] = {
 	DECLARE_TABLE("square", g_table_square_wave_data),
 	DECLARE_TABLE("sine", g_table_sine_wave_data),
@@ -106,98 +82,6 @@ int check_wave_tables()
 	assert( sizeof(g_table_sine_wave_data) / sizeof(int16_t) <= 0xFFFF );
 	assert( sizeof(g_table_triangle_wave_data) / sizeof(int16_t) <= 0xFFFF );
 	assert( sizeof(g_table_sawtooth_wave_data) / sizeof(int16_t) <= 0xFFFF );
-
-	return 0;
-}
-
-/*#define CHECK_MATH*/
-
-int render(int16_t *out, struct wave_table *tbl, uint32_t offset, uint16_t count,
-           const struct wave_scale wave_scale, uint8_t channels, uint16_t vol_frac)
-{
-	int32_t num;
-	const int32_t denom = USHRT_MAX;
-	uint32_t tbl_len, wave_len;
-	uint32_t k, frame, f_reg, r_reg;
-	uint32_t p;
-	int16_t val;
-	int32_t a, b;
-	uint8_t ch;
-	char interpolate = 1;
-	int16_t shift;
-	uint32_t f;
-#ifdef CHECK_MATH
-	uint32_t ck_p, ck_tbl_len, ck_wave_len;
-#endif
-
-	assert( out );
-	assert( tbl );
-	assert( channels > 0 );
-
-	num = vol_frac;
-	tbl_len = tbl->length << wave_scale.sub_shift;
-	wave_len = (wave_scale.length << wave_scale.sub_shift) | wave_scale.sub;
-#ifdef CHECK_MATH
-	ck_tbl_len = (uint64_t)tbl->length << wave_scale.sub_shift;
-	ck_wave_len = ((uint64_t)wave_scale.length << wave_scale.sub_shift) | wave_scale.sub;
-#endif
-	if ( (tbl_len / wave_len) > 4 )
-		interpolate = 0;
-
-	for (k=0 ; k < count ; ++k) {
-		/* This bit of code is over-optimized for 32-bit processors.
-		 * See the "CHECK_MATH" section for grokkable code.
-		 * Why?  Because it was a fun challenge.
-		 *
-		 * Strategy: Break "frame" into 8-bit chunks, and build
-		 * up "p", being careful to preserve remainders.
-		 */
-		assert( (1<<16) > tbl->mask ); /* uncomment code if this fails */
-		assert( wave_len == (wave_len & 0xFFFFFF) );
-		assert( tbl_len == (tbl_len & 0xFFFFFF) );
-		frame = offset + k;
-		p = 0;
-		f_reg = 0;
-		r_reg = 0;
-		for (shift=24 ; shift >= 0 ; shift -= 8) {
-			f = (frame >> shift) & 0xFF;
-			f_reg = f * tbl_len;
-			r_reg = (r_reg << 8) + f_reg % wave_len;
-			p = (p << 8) + f_reg / wave_len + r_reg / wave_len;
-			r_reg %= wave_len;
-		}
-		p &= tbl->mask;
-#ifdef CHECK_MATH
-		ck_p = ((uint64_t)(offset + k) * ck_tbl_len) / ck_wave_len;
-		ck_p &= tbl->mask;
-		assert( p == ck_p );
-#endif
-		if (interpolate) {
-			/* interpolate */
-			int32_t water;
-			a = tbl->data[p];
-			b = tbl->data[p + 1];
-			assert( (int32_t)r_reg >= 0 );
-			assert( (int32_t)wave_len >= 0 );
-			/* water down r_reg and wave_len if they will overflow */
-			water = 4;
-			while ((r_reg >> water) > 0x7FFF)
-				++water;
-			val = a + ((b-a) * ((int32_t)r_reg >> water)) / ((int32_t)wave_len >> water);
-			if (a < b)
-				assert( a <= val && val <= b );
-			else
-				assert( a >= val && val >= b );
-		} else {
-			val = tbl->data[p];
-		}
-		val = (val * num) / denom;
-		*out++ = val;
-		if (channels >> 1)
-			*out++ = val;
-		for (ch = 2 ; ch < channels ; ++ch)
-			*out++ = val;
-	}
 
 	return 0;
 }
@@ -237,13 +121,13 @@ int inner_main(struct tone_generator_config config)
 	}
 
 	for (pos=0 ; pos < config.duration ; pos += pcm_config->period_size) {
-		render(buf,
-		       config.wave_table,
-		       pos,
-		       pcm_config->period_size,
-		       config.wave_scale,
-		       pcm_config->channels,
-		       config.volume);
+		oscillator_table_render(buf,
+			config.wave_table,
+			pos,
+			pcm_config->period_size,
+			config.wave_scale,
+			pcm_config->channels,
+			config.volume);
 		if (pcm_write(pcm,
 			      buf,
 			      pcm_config->channels * pcm_config->period_size * sizeof(int16_t))) {

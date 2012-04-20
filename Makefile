@@ -70,9 +70,11 @@ generate-wave-table.o: generate-wave-table.c
 table_%.c: generate-wave-table
 	./generate-wave-table $* $(TONEGEN_WAVE_LENGTH) > $@
 
-tone-generator: tone-generator.o
+tone-generator: tone-generator.o oscillator-table.o
 	$(CC) -o $@ $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) $^ $(TONEGEN_LDLIBS)
 
 tone-generator.o: tone-generator.c $(TONEGEN_TABLE_TARGETS)
 	$(CC) -c -o $@ $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) $<
 
+oscillator-table.o: oscillator-table.c
+	$(CC) -c -o $@ $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) $<
