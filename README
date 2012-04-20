@@ -49,3 +49,29 @@ LICENSING
 
 At the moment, this is a mixture of Apache 2.0 and BSD licensing.
 
+IDEAS AND FUTURE DIRECTIONS
+---------------------------
+
+* Consolidate all target binaries to ONE binary:
+
+    tinyplay ==> audio-tool play
+    tinycap ==> audio-tool cap
+    tinymix ==> audio-tool mix
+    pulse-generator ==> audio-tool pulse
+    tone-generator ==> audio-tool tone
+    (sanity test) ==> audio-tool test sanity
+
+* Use getopt (and maybe gengetopt) for CLI parsing.
+
+* On unit tests, android's test tool looks for the last output
+  line instead of the OS return code for pass/fail.  Make sure
+  that we're compatible with that.
+
+* Add support for using the mmap() API in the tests and/or
+  play/cap.
+
+* Support UCM
+
+* Test multi-port configurations (e.g. play a system tone during
+  mm playback.  Capture/playback at the same time over misc. ports.
+
