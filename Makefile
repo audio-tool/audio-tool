@@ -7,6 +7,7 @@ TARGETS := $(LIB) \
 	tinyplay \
 	tinycap \
 	tinymix \
+	pulse-generator \
 
 
 all: $(TARGETS)
@@ -19,6 +20,9 @@ tinycap: tinycap.o $(LIB)
 
 tinymix: tinymix.o $(LIB)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+pulse-generator: pulse-generator.o $(LIB)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS) -lrt
 
 $(LIB): $(OBJECTS)
 	$(AR) rc $@ $(OBJECTS)
