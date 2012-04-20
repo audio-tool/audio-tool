@@ -1,25 +1,30 @@
-CFLAGS = -c -fPIC
 INC = include
+CFLAGS = -g -O0 -I$(INC)
 OBJECTS = mixer.o pcm.o
-LIB = libtinyalsa.so
+LIB = libtinyalsa.a
 
-all: $(LIB) tinyplay tinycap tinymix
+TARGETS := $(LIB) \
+	tinyplay \
+	tinycap \
+	tinymix \
 
-tinyplay: $(LIB) tinyplay.o
-	gcc tinyplay.o -L. -ltinyalsa -o tinyplay
 
-tinycap: $(LIB) tinycap.o
-	gcc tinycap.o -L. -ltinyalsa -o tinycap
+all: $(TARGETS)
 
-tinymix: $(LIB) tinymix.o
-	gcc tinymix.o -L. -ltinyalsa -o tinymix
+tinyplay: tinyplay.o $(LIB)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+tinycap: tinycap.o $(LIB)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+tinymix: tinymix.o $(LIB)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
 
 $(LIB): $(OBJECTS)
-	gcc -shared $(OBJECTS) -o $(LIB)
+	$(AR) rc $@ $(OBJECTS)
 
 .c.o:
-	gcc $(CFLAGS) $< -I$(INC)
-	
+	$(CC) $(CFLAGS) -c $<
+
 clean:
-	-rm $(LIB) $(OBJECTS) tinyplay.o tinyplay tinycap.o tinycap \
-	tinymix.o tinymix
+	-rm *.o $(TARGETS)
