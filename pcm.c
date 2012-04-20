@@ -705,7 +705,6 @@ int pcm_state(struct pcm *pcm)
 int pcm_wait(struct pcm *pcm, int timeout)
 {
     struct pollfd pfd;
-    unsigned short revents = 0;
     int err;
 
     pfd.fd = pcm->fd;
@@ -818,6 +817,5 @@ int pcm_mmap_write(struct pcm *pcm, const void *buffer, unsigned int bytes)
         count -= frames;
     }
 
-_end:
     return 0;
 }
