@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <time.h>
 #include <signal.h>
+#include <string.h>
 
 volatile int running = 1;
 
