@@ -39,9 +39,22 @@
 
 /*#define CHECK_MATH*/
 
+/**
+ * \brief render an oscillator table to an output buffer, using the freq specified
+ *
+ * \param out The output buffer (PCM16)
+ * \param tbl The source oscillator table
+ * \param offset the frame offset of the wave as rendered on the output
+ * \param count the number of frames to render this cycle
+ * \param wave_scale specification of the desired output wavelength
+ * \param channels number of output channels in the buffer (range: [1,32])
+ * \param clannel_mask mask indicating which channels to write to
+ *
+ * \returns non-zero on error.
+ */
 int oscillator_table_render(int16_t *out, struct wave_table *tbl, uint32_t offset,
 		uint16_t count, const struct wave_scale wave_scale, uint8_t channels,
-		uint16_t vol_frac)
+		uint32_t channel_mask, uint16_t vol_frac)
 {
 	int32_t num;
 	const int32_t denom = USHRT_MAX;
@@ -51,6 +64,7 @@ int oscillator_table_render(int16_t *out, struct wave_table *tbl, uint32_t offse
 	int16_t val;
 	int32_t a, b;
 	uint8_t ch;
+	int32_t chbit;
 	char interpolate = 1;
 	int16_t shift;
 	uint32_t f;
@@ -120,11 +134,11 @@ int oscillator_table_render(int16_t *out, struct wave_table *tbl, uint32_t offse
 			val = tbl->data[p];
 		}
 		val = (val * num) / denom;
-		*out++ = val;
-		if (channels >> 1)
-			*out++ = val;
-		for (ch = 2 ; ch < channels ; ++ch)
-			*out++ = val;
+		for (ch = 0, chbit=1 ; ch < channels ; ++ch, chbit <<= 1) {
+			if ( channel_mask & chbit )
+				*out = val;
+			++out;
+		}
 	}
 
 	return 0;

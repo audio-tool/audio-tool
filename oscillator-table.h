@@ -52,8 +52,8 @@ struct wave_scale {
 	}
 
 int oscillator_table_render(int16_t *out, struct wave_table *tbl, uint32_t offset,
-		uint16_t count, const struct wave_scale wave_scale, uint8_t channels,
-		 uint16_t vol_frac);
+		uint16_t count, const struct wave_scale wave_scale, uint8_t channel,
+		uint32_t channel_mask, uint16_t vol_frac);
 
 #endif /* __LIBGABE_OSCILLATOR_TABLE_H__ */
 

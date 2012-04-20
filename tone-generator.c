@@ -127,6 +127,7 @@ int inner_main(struct tone_generator_config config)
 			pcm_config->period_size,
 			config.wave_scale,
 			pcm_config->channels,
+                        ~0, /* write to all channels */
 			config.volume);
 		if (pcm_write(pcm,
 			      buf,
