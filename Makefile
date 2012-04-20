@@ -4,6 +4,28 @@ OBJECTS = mixer.o pcm.o
 LIB = libtinyalsa.a
 LINKOPTS := -static
 
+HOSTCC := gcc
+HOSTCXX := g++
+HOSTAR := ar
+HOSTLINKOPTS :=
+HOSTCFLAGS := $(HOSTLINKOPTS) $(CFLAGS)
+HOSTLDFLAGS :=
+HOSTLDLIBS :=
+
+# If you set ARCH to anything, then CROSS_COMPILE will be used.
+ifneq ($(ARCH),)
+	TARGET_CROSS_COMPILE := $(CROSS_COMPILE)
+else
+	TARGET_CROSS_COMPILE :=
+endif
+TARGETCC := $(TARGET_CROSS_COMPILE)gcc
+TARGETCXX := $(TARGET_CROSS_COMPILE)g++
+TARGETAR := $(TARGET_CROSS_COMPILE)ar
+TARGETLINKOPTS := -static
+TARGETCFLAGS := $(TARGETLINKOPTS) $(CFLAGS)
+TARGETLDFLAGS :=
+TARGETLDLIBS := $(LIB) -lm -lrt
+
 TARGETS := $(LIB) \
 	tinyplay \
 	tinycap \
@@ -14,22 +36,22 @@ TARGETS := $(LIB) \
 all: $(TARGETS) all_tone_generator
 
 tinyplay: tinyplay.o $(LIB)
-	$(CC) $(LINKOPTS) $(CFLAGS) -o $@ $^ $(LDLIBS)
+	$(TARGETCC) $(TARGETCFLAGS) $(TARGETLDFLAGS) -o $@ $^ $(TARGETLDLIBS)
 
 tinycap: tinycap.o $(LIB)
-	$(CC) $(LINKOPTS) $(CFLAGS) -o $@ $^ $(LDLIBS)
+	$(TARGETCC) $(TARGETCFLAGS) $(TARGETLDFLAGS) -o $@ $^ $(TARGETLDLIBS)
 
 tinymix: tinymix.o $(LIB)
-	$(CC) $(LINKOPTS) $(CFLAGS) -o $@ $^ $(LDLIBS)
+	$(TARGETCC) $(TARGETCFLAGS) $(TARGETLDFLAGS) -o $@ $^ $(TARGETLDLIBS)
 
 pulse-generator: pulse-generator.o $(LIB)
-	$(CC) $(LINKOPTS) $(CFLAGS) -o $@ $^ $(LDLIBS) -lrt
+	$(TARGETCC) $(TARGETCFLAGS) $(TARGETLDFLAGS) -o $@ $^ $(TARGETLDLIBS)
 
 $(LIB): $(OBJECTS)
-	$(AR) rc $@ $(OBJECTS)
+	$(TARGETAR) rc $@ $(OBJECTS)
 
 .c.o:
-	$(CC) $(CFLAGS) -c $<
+	$(TARGETCC) $(TARGETCFLAGS) -c $<
 
 clean: clean_tone_generator
 	-rm *.o $(TARGETS)
@@ -40,8 +62,7 @@ clean: clean_tone_generator
 ##
 ##############################################
 
-TONEGEN_CFLAGS := $(CFLAGS)
-TONEGEN_CPPFLAGS := $(CPPFLAGS)
+TONEGEN_CFLAGS := $(TARGETCFLAGS)
 TONEGEN_LDFLAGS := $(LDFLAGS)
 TONEGEN_LDLIBS := $(LDLIBS) $(LIB) -lm
 
@@ -64,19 +85,17 @@ clean_tone_generator:
 
 # This program is intended as a build tool, so it's compiled for the host.
 generate-wave-table: generate-wave-table.o
-	$(CC) -o $@ $(TONEGEN_LDFLAGS) $^ $(LDLIBS) -lm
+	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^ $(HOSTLDLIBS) -lm
 
+# This program is intended as a build tool, so it's compiled for the host.
 generate-wave-table.o: generate-wave-table.c
-	$(CC) -c -o $@  $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) $<
+	$(HOSTCC) -c $(HOSTCFLAGS) $(HOSTCFLAGS) -o $@ $^
 
 table_%.c: generate-wave-table
 	./generate-wave-table $* $(TONEGEN_WAVE_LENGTH) > $@
 
 tone-generator: tone-generator.o oscillator-table.o
-	$(CC) $(LINKOPTS) -o $@ $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) $^ $(TONEGEN_LDLIBS)
+	$(TARGETCC) $(TARGETCFLAGS) $(TARGETLDFLAGS) -o $@ $^ $(TARGETLDLIBS)
 
 tone-generator.o: tone-generator.c $(TONEGEN_TABLE_TARGETS)
-	$(CC) -c -o $@ $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) $<
-
-oscillator-table.o: oscillator-table.c
-	$(CC) -c -o $@ $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) $<
+	$(TARGETCC) -c $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) -o $@ $<
