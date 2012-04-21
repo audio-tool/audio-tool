@@ -32,6 +32,9 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "config.h"
+#include "tinyplay.h"
+
 #define ID_RIFF 0x46464952
 #define ID_WAVE 0x45564157
 #define ID_FMT  0x20746d66
@@ -55,11 +58,12 @@ struct wav_header {
     uint32_t data_sz;
 };
 
+static
 void play_sample(FILE *file, unsigned int card, unsigned int device, unsigned int channels,
                  unsigned int rate, unsigned int bits, unsigned int period_size,
                  unsigned int period_count, unsigned int duration);
 
-int main(int argc, char **argv)
+int tinyplay_main(const struct audio_tool_config *config, int argc, char **argv)
 {
     FILE *file;
     struct wav_header header;
@@ -69,9 +73,8 @@ int main(int argc, char **argv)
     unsigned int period_count = 4;
     unsigned int duration = -1;
 
-    if (argc < 2) {
-        fprintf(stderr, "Usage: %s file.wav [-D card] [-d device] [-p period_size]"
-                " [-n n_periods] [-t duration] \n", argv[0]);
+    if (argc != 2) {
+        fprintf(stderr, "Usage: audio-tool [options] play file.wav\n");
         return 1;
     }
 
@@ -81,37 +84,11 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    /* parse command line arguments */
-    argv += 2;
-    while (*argv) {
-        if (strcmp(*argv, "-d") == 0) {
-            argv++;
-            if (*argv)
-                device = atoi(*argv);
-        }
-        if (strcmp(*argv, "-p") == 0) {
-            argv++;
-            if (*argv)
-                period_size = atoi(*argv);
-        }
-        if (strcmp(*argv, "-n") == 0) {
-            argv++;
-            if (*argv)
-                period_count = atoi(*argv);
-        }
-        if (strcmp(*argv, "-D") == 0) {
-            argv++;
-            if (*argv)
-                card = atoi(*argv);
-        }
-	if (strcmp(*argv, "-t") == 0) {
-            argv++;
-            if (*argv)
-                duration = atoi(*argv);
-        }
-        if (*argv)
-            argv++;
-    }
+    device = config->device;
+    period_size = config->period_size;
+    period_count = config->num_periods;
+    card = config->card;
+    duration = config->duration;
 
     fread(&header, sizeof(struct wav_header), 1, file);
 
@@ -133,6 +110,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
+static
 void play_sample(FILE *file, unsigned int card, unsigned int device, unsigned int channels,
                  unsigned int rate, unsigned int bits, unsigned int period_size,
                  unsigned int period_count, unsigned int duration)
@@ -173,7 +151,10 @@ void play_sample(FILE *file, unsigned int card, unsigned int device, unsigned in
         return;
     }
 
-    requested = pcm_frames_to_bytes(pcm, rate * duration);
+    if (duration)
+        requested = pcm_frames_to_bytes(pcm, rate * duration);
+    else
+        requested = 0;
 
     printf("Playing sample: %u ch, %u hz, %u bit\n", channels, rate, bits);
 
@@ -186,7 +167,7 @@ void play_sample(FILE *file, unsigned int card, unsigned int device, unsigned in
             }
         }
         written += num_read;
-    } while ((num_read > 0) && (written < requested));
+    } while ((num_read > 0) && (!requested || (written < requested)));
 
     free(buffer);
     pcm_close(pcm);

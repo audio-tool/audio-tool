@@ -1,6 +1,5 @@
 INC = include
 CFLAGS = -g -O0 -I$(INC) -Wall
-OBJECTS = mixer.o pcm.o
 LIB = libtinyalsa.a
 LINKOPTS := -static
 
@@ -11,6 +10,7 @@ HOSTLINKOPTS :=
 HOSTCFLAGS := $(HOSTLINKOPTS) $(CFLAGS)
 HOSTLDFLAGS :=
 HOSTLDLIBS :=
+HOSTGENGETOPT := gengetopt
 
 # If you set ARCH to anything, then CROSS_COMPILE will be used.
 ifneq ($(ARCH),)
@@ -27,16 +27,29 @@ TARGETLDFLAGS :=
 TARGETLDLIBS := $(LIB) -lm -lrt
 
 TARGETS := $(LIB) \
-	tinyplay \
+	audio-tool \
 	tinycap \
 	tinymix \
 	pulse-generator \
 
+LIB_OBJECTS = \
+	tinyplay.o \
+	mixer.o \
+	pcm.o \
+
 
 all: $(TARGETS) all_tone_generator
 
-tinyplay: tinyplay.o $(LIB)
+audio-tool: audio-tool.o config.o cmdline.o
 	$(TARGETCC) $(TARGETCFLAGS) $(TARGETLDFLAGS) -o $@ $^ $(TARGETLDLIBS)
+
+config.o: config.c cmdline.h
+	$(TARGETCC) $(TARGETCFLAGS) -c -o $@ $<
+
+cmdline.h: cmdline.c
+
+cmdline.c: cmdline.ggo
+	$(HOSTGENGETOPT) --input=$< --file-name=cmdline --unamed-opts
 
 tinycap: tinycap.o $(LIB)
 	$(TARGETCC) $(TARGETCFLAGS) $(TARGETLDFLAGS) -o $@ $^ $(TARGETLDLIBS)
@@ -47,14 +60,15 @@ tinymix: tinymix.o $(LIB)
 pulse-generator: pulse-generator.o $(LIB)
 	$(TARGETCC) $(TARGETCFLAGS) $(TARGETLDFLAGS) -o $@ $^ $(TARGETLDLIBS)
 
-$(LIB): $(OBJECTS)
-	$(TARGETAR) rc $@ $(OBJECTS)
+$(LIB): $(LIB_OBJECTS)
+	$(TARGETAR) rc $@ $^
 
 .c.o:
 	$(TARGETCC) $(TARGETCFLAGS) -c $<
 
 clean: clean_tone_generator
-	-rm *.o $(TARGETS)
+	-rm -f *.o $(TARGETS)
+	-rm -f cmdline.c cmdline.h
 
 ##############################################
 ##

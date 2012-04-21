@@ -11,3 +11,5 @@ table_sine.c
 table_square.c
 table_triangle.c
 tone-generator
+cmdline.[ch]
+audio-tool
