@@ -45,3 +45,9 @@ int parse_args(struct audio_tool_config *conf, int *argc, char*** argv)
 
 	return ret;
 }
+
+void usage(void)
+{
+	cmdline_parser_print_help();
+}
+
