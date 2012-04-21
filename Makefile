@@ -29,13 +29,13 @@ TARGETLDLIBS := $(LIB) -lm -lrt
 TARGETS := $(LIB) \
 	audio-tool \
 	tinymix \
-	pulse-generator \
 
 LIB_OBJECTS = \
 	tinyplay.o \
 	tinycap.o \
 	mixer.o \
 	pcm.o \
+	pulse-generator.o \
 
 
 all: $(TARGETS) all_tone_generator

@@ -35,9 +35,12 @@
 #include <signal.h>
 #include <string.h>
 
-volatile int running = 1;
+#include "config.h"
+#include "pulse-generator.h"
 
-void sigint_handler(int sig)
+static volatile int running = 1;
+
+static void sigint_handler(int sig)
 {
     running = 0;
 }
@@ -53,12 +56,12 @@ struct interval_tracker {
     int initd;
 };
 
-void ivt_init(struct interval_tracker *it)
+static void ivt_init(struct interval_tracker *it)
 {
     memset(it, 0, sizeof(struct interval_tracker));
 }
 
-void ivt_lap(struct interval_tracker *it)
+static void ivt_lap(struct interval_tracker *it)
 {
     double elapsed;
     clock_gettime(CLOCK_MONOTONIC, &it->now);
@@ -86,7 +89,7 @@ void ivt_lap(struct interval_tracker *it)
     it->initd = 1;
 }
 
-double ivt_average(struct interval_tracker *it)
+static double ivt_average(struct interval_tracker *it)
 {
     if (it->count <= 0)
         return 0.0;
@@ -108,9 +111,9 @@ struct play_pulses_params {
     unsigned int pulse_position;
 };
 
-void play_pulses(struct play_pulses_params *params);
+static void play_pulses(struct play_pulses_params *params);
 
-int main(int argc, char **argv)
+int pulse_generator_main(const struct audio_tool_config *config, int argc, char **argv)
 {
     struct play_pulses_params params = {
         .card = 0,
@@ -122,44 +125,34 @@ int main(int argc, char **argv)
         .period_count = 4,
         .pulse_position = PULSE_AT_FRONT,
     };
-	    
-    /* parse command line arguments */
-    argv += 1;
-    while (*argv) {
-        if (strcmp(*argv, "-d") == 0) {
-            argv++;
-            if (*argv) params.device = atoi(*argv);
-        }
-        if (strcmp(*argv, "-p") == 0) {
-            argv++;
-            if (*argv) params.period_size = atoi(*argv);
-        }
-        if (strcmp(*argv, "-n") == 0) {
-            argv++;
-            if (*argv) params.period_count = atoi(*argv);
-        }
-        if (strcmp(*argv, "-D") == 0) {
-            argv++;
-            if (*argv) params.card = atoi(*argv);
-        }
-	if (strcmp(*argv, "-c") == 0) {
-            argv++;
-            if (*argv) params.channels = atoi(*argv);
-        }
-        if (strcmp(*argv, "-r") == 0) {
-            argv++;
-            if (*argv) params.rate = atoi(*argv);
-        }
-        if (strcmp(*argv, "-b") == 0) {
-            argv++;
-            if (*argv) params.bits = atoi(*argv);
-        }
-        if (strcmp(*argv, "-P") == 0) {
-            argv++;
-            if (*argv) params.pulse_position = atoi(*argv);
-        }
-        if (*argv) argv++;
+
+    if (argc > 4) {
+	    printf("Usage: audio-tool [options] pulse [front] [middle] [end]\n");
+	    return 1;
+    } else if (argc > 1) {
+	    int n;
+	    params.pulse_position = 0;
+	    for (n = 1 ; n < argc ; ++n) {
+		    if (strcmp("front", argv[n]) == 0) {
+			    params.pulse_position |= PULSE_AT_FRONT;
+		    } else if (strcmp("middle", argv[n]) == 0) {
+			    params.pulse_position |= PULSE_AT_MIDDLE;
+		    } else if (strcmp("end", argv[n]) == 0) {
+			    params.pulse_position |= PULSE_AT_END;
+		    } else {
+			    printf("Usage: audio-tool [options] pulse [front] [middle] [end]\n");
+			    return 1;
+		    }
+	    }
     }
+
+    params.device = config->device;
+    params.period_size = config->period_size;
+    params.period_count = config->num_periods;
+    params.card = config->card;
+    params.channels = config->channels;
+    params.rate = config->rate;
+    params.bits = config->bits;
 
     signal(SIGINT, sigint_handler);
     play_pulses(&params);
@@ -167,7 +160,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void play_pulses(struct play_pulses_params *params)
+static void play_pulses(struct play_pulses_params *params)
 {
     struct pcm_config config;
     struct pcm *pcm;
