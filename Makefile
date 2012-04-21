@@ -28,11 +28,11 @@ TARGETLDLIBS := $(LIB) -lm -lrt
 
 TARGETS := $(LIB) \
 	audio-tool \
-	tinymix \
 
 LIB_OBJECTS = \
 	tinyplay.o \
 	tinycap.o \
+	tinymix.o \
 	mixer.o \
 	pcm.o \
 	pulse-generator.o \

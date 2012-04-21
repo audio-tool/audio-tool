@@ -32,6 +32,9 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "config.h"
+#include "tinymix.h"
+
 static void tinymix_list_controls(struct mixer *mixer);
 static void tinymix_detail_control(struct mixer *mixer, unsigned int id,
                                    int print_all);
@@ -39,21 +42,12 @@ static void tinymix_set_value(struct mixer *mixer, unsigned int id,
                               char *value);
 static void tinymix_print_enum(struct mixer_ctl *ctl, int print_all);
 
-int main(int argc, char **argv)
+int tinymix_main(const struct audio_tool_config *config, int argc, char **argv)
 {
     struct mixer *mixer;
     int card = 0;
 
-    if ((argc > 2) && (strcmp(argv[1], "-D") == 0)) {
-        argv++;
-        if (argv[1]) {
-            card = atoi(argv[1]);
-            argv++;
-            argc -= 2;
-        } else {
-            argc -= 1;
-        }
-    }
+    card = config->card;
 
     mixer = mixer_open(card);
     if (!mixer) {

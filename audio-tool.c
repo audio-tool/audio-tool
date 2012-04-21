@@ -21,6 +21,7 @@
 
 #include "tinyplay.h"
 #include "tinycap.h"
+#include "tinymix.h"
 #include "pulse-generator.h"
 
 /* defined in config.c */
@@ -41,6 +42,8 @@ int main(int argc, char* argv[])
 		} else if (strcmp(argv[0], "cap") == 0
 			   || strcmp(argv[0], "capture") == 0) {
 			ret = tinycap_main(&config, argc, argv);
+		} else if (strcmp(argv[0], "mix") == 0) {
+			ret = tinymix_main(&config, argc, argv);
 		} else if (strcmp(argv[0], "pulse") == 0) {
 			ret = pulse_generator_main(&config, argc, argv);
 		} else {
