@@ -63,7 +63,8 @@ void play_sample(FILE *file, unsigned int card, unsigned int device, unsigned in
                  unsigned int rate, unsigned int bits, unsigned int period_size,
                  unsigned int period_count, unsigned int duration);
 
-int tinyplay_main(const struct audio_tool_config *config, int argc, char **argv)
+int tinyplay_main(const struct audio_tool_config *config, int argc, char **argv,
+		int legacy_mode)
 {
     FILE *file;
     struct wav_header header;
@@ -72,15 +73,21 @@ int tinyplay_main(const struct audio_tool_config *config, int argc, char **argv)
     unsigned int period_size = 1024;
     unsigned int period_count = 4;
     unsigned int duration = -1;
+    int arg;
 
-    if (argc != 2) {
+    if ((!legacy_mode && argc != 2) || (legacy_mode && argc != 1)) {
         fprintf(stderr, "Usage: audio-tool [options] play file.wav\n");
         return 1;
     }
 
-    file = fopen(argv[1], "rb");
+    if (legacy_mode)
+	    arg = 0;
+    else
+	    arg = 1;
+
+    file = fopen(argv[arg], "rb");
     if (!file) {
-        fprintf(stderr, "Unable to open file '%s'\n", argv[1]);
+        fprintf(stderr, "Unable to open file '%s'\n", argv[arg]);
         return 1;
     }
 
@@ -97,7 +104,7 @@ int tinyplay_main(const struct audio_tool_config *config, int argc, char **argv)
         (header.fmt_id != ID_FMT) ||
         (header.audio_format != FORMAT_PCM) ||
         (header.fmt_sz != 16)) {
-        fprintf(stderr, "Error: '%s' is not a PCM riff/wave file\n", argv[1]);
+        fprintf(stderr, "Error: '%s' is not a PCM riff/wave file\n", argv[arg]);
         fclose(file);
         return 1;
     }

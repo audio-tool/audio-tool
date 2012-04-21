@@ -28,6 +28,7 @@
 #ifndef __TINYALSA_TINYMIX_H__
 #define __TINYALSA_TINYMIX_H__
 
-int tinymix_main(const struct audio_tool_config *config, int argc, char **argv);
+int tinymix_main(const struct audio_tool_config *config, int argc, char **argv,
+		int legacy_mode);
 
 #endif /* __TINYALSA_TINYMIX_H__ */

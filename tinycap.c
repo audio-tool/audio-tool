@@ -72,7 +72,8 @@ void sigint_handler(int sig)
     capturing = 0;
 }
 
-int tinycap_main(const struct audio_tool_config *config, int argc, char **argv)
+int tinycap_main(const struct audio_tool_config *config, int argc, char **argv,
+		int legacy_mode)
 {
     FILE *file;
     struct wav_header header;
@@ -85,15 +86,21 @@ int tinycap_main(const struct audio_tool_config *config, int argc, char **argv)
     unsigned int period_size = 1024;
     unsigned int period_count = 4;
     unsigned int duration = 0;
+    int arg;
 
-    if (argc != 2) {
+    if ((!legacy_mode && argc != 2) || (legacy_mode && argc != 1)) {
         fprintf(stderr, "Usage: audio-tool [options] capture file.wav\n");
         return 1;
     }
 
-    file = fopen(argv[1], "wb");
+    if (legacy_mode)
+	    arg = 0;
+    else
+	    arg = 1;
+
+    file = fopen(argv[arg], "wb");
     if (!file) {
-        fprintf(stderr, "Unable to create file '%s'\n", argv[1]);
+        fprintf(stderr, "Unable to create file '%s'\n", argv[arg]);
         return 1;
     }
 

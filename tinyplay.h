@@ -28,6 +28,7 @@
 #ifndef __TINYALSA_TINYPLAY_H__
 #define __TINYALSA_TINYPLAY_H__
 
-int tinyplay_main(const struct audio_tool_config *config, int argc, char **argv);
+int tinyplay_main(const struct audio_tool_config *config, int argc, char **argv,
+		int legacy_mode);
 
 #endif /* __TINYALSA_TINYPLAY_H__ */

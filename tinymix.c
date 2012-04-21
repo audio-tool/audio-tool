@@ -42,7 +42,8 @@ static void tinymix_set_value(struct mixer *mixer, unsigned int id,
                               char *value);
 static void tinymix_print_enum(struct mixer_ctl *ctl, int print_all);
 
-int tinymix_main(const struct audio_tool_config *config, int argc, char **argv)
+int tinymix_main(const struct audio_tool_config *config, int argc, char **argv,
+		int legacy_mode)
 {
     struct mixer *mixer;
     int card = 0;
@@ -55,12 +56,17 @@ int tinymix_main(const struct audio_tool_config *config, int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (argc == 1)
+    if (!legacy_mode) {
+	    --argc;
+	    ++argv;
+    }
+
+    if (argc == 0)
         tinymix_list_controls(mixer);
+    else if (argc == 1)
+        tinymix_detail_control(mixer, atoi(argv[0]), 1);
     else if (argc == 2)
-        tinymix_detail_control(mixer, atoi(argv[1]), 1);
-    else if (argc == 3)
-        tinymix_set_value(mixer, atoi(argv[1]), argv[2]);
+        tinymix_set_value(mixer, atoi(argv[0]), argv[1]);
     else
         printf("Usage: tinymix [-D card] [control id] [value to set]\n");
 

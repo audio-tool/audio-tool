@@ -28,6 +28,7 @@
 #ifndef __TINYALSA_TINYCAP_H__
 #define __TINYALSA_TINYCAP_H__
 
-int tinycap_main(const struct audio_tool_config *config, int argc, char **argv);
+int tinycap_main(const struct audio_tool_config *config, int argc, char **argv,
+		int legacy_mode);
 
 #endif /* __TINYALSA_TINYCAP_H__ */
