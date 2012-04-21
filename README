@@ -1,11 +1,12 @@
 OMAP audio-tool
 ---------------
 
-The future: There will be an executable called audio-tool that will be
-a swiss-army knife for testing and using audio on OMAP.
+The audio-tool is a swiss-army knife for testing and using audio on
+OMAP.  It includes the ability to play and record simple wave files,
+play test tones and impulses, and manipulate the ALSA mixer.
 
-Now: This is a fork of tinyalsa, patched with our UTR-related patches,
-and with two additional tools (pulse-generator and tone-generator).
+There also includes a "legacy mode" for backwards-compatibility with
+the tinyalsa utils.
 
 MANIFEST
 --------
@@ -15,11 +16,7 @@ for now we have:
 
 TARGET BINARIES:
 
-    tinymix - An ALSA mixer control program
-    tinyplay - An ALSA playback tool for playing RIFF wave files
-    tinycap - An ALSA capture tool for recording RIFF wave files
-    tone-generator - A tool for generating misc. waveforms
-    pulse-generator - A tool for generating impulses on period boundaries.
+    audio-tool - The main audio-tool tool.
 
 HOST BINARIES:
 
@@ -44,6 +41,24 @@ To build for the target device, do this:
 
 ...and push the binaries to the device.
 
+LEGACY MODE
+-----------
+
+The audio-tool may be used as a drop-in replacement for the tinyalsa
+utils by creating symlinks to audio-tool.  In this mode, it accepts
+the exact same command-line syntax as those tools.  To use this mode,
+then you need to do this on your target device.
+
+    # which audio-tool
+    /usr/bin/audio-tool
+    # ln -s audio-tool /usr/bin/tinyplay
+    # ln -s audio-tool /usr/bin/tinycap
+    # ln -s audio-tool /usr/bin/tinymix
+
+You can then use those tools as you always have (with some of the
+enhanced parameters that the audio team has been using interally, such
+as the '-t duration' parameter.
+
 LICENSING
 ---------
 
@@ -51,17 +66,6 @@ At the moment, this is a mixture of Apache 2.0 and BSD licensing.
 
 IDEAS AND FUTURE DIRECTIONS
 ---------------------------
-
-* Consolidate all target binaries to ONE binary:
-
-    tinyplay ==> audio-tool play
-    tinycap ==> audio-tool cap
-    tinymix ==> audio-tool mix
-    pulse-generator ==> audio-tool pulse
-    tone-generator ==> audio-tool tone
-    (sanity test) ==> audio-tool test sanity
-
-* Use getopt (and maybe gengetopt) for CLI parsing.
 
 * On unit tests, android's test tool looks for the last output
   line instead of the OS return code for pass/fail.  Make sure
