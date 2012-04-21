@@ -3,6 +3,11 @@ CFLAGS = -g -O0 -I$(INC) -Wall
 LIB = libtinyalsa.a
 LINKOPTS := -static
 
+# Versions are 1.0, 1.0.1, 1.0.2, 1.1, 1.1.1, etc.
+VERSION_STR := 0.0.0
+# Version string bytes: 0xMMmmPP (MM=major, mm=minor, PP=patch)
+VERSION := 0x000000
+
 HOSTCC := gcc
 HOSTCXX := g++
 HOSTAR := ar
@@ -22,7 +27,11 @@ TARGETCC := $(TARGET_CROSS_COMPILE)gcc
 TARGETCXX := $(TARGET_CROSS_COMPILE)g++
 TARGETAR := $(TARGET_CROSS_COMPILE)ar
 TARGETLINKOPTS := -static
-TARGETCFLAGS := $(TARGETLINKOPTS) $(CFLAGS)
+TARGETCFLAGS := $(TARGETLINKOPTS) $(CFLAGS) \
+	-DVERSION_STR="\"$(VERSION_STR)\"" \
+	-DCMDLINE_PARSER_VERSION="\"$(VERSION_STR)\"" \
+	-DVERSION=$(VERSION) \
+
 TARGETLDFLAGS :=
 TARGETLDLIBS := $(LIB) -lm -lrt
 

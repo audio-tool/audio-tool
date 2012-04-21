@@ -1,5 +1,4 @@
 package "audio-tool"
-version "0.0.0"
 usage "audio-tool [options] command [command args]"
 description "Audio utility knife for playback, capture, and tests
 
