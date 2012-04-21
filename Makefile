@@ -28,19 +28,19 @@ TARGETLDLIBS := $(LIB) -lm -lrt
 
 TARGETS := $(LIB) \
 	audio-tool \
-	tinycap \
 	tinymix \
 	pulse-generator \
 
 LIB_OBJECTS = \
 	tinyplay.o \
+	tinycap.o \
 	mixer.o \
 	pcm.o \
 
 
 all: $(TARGETS) all_tone_generator
 
-audio-tool: audio-tool.o config.o cmdline.o
+audio-tool: audio-tool.o config.o cmdline.o $(LIB)
 	$(TARGETCC) $(TARGETCFLAGS) $(TARGETLDFLAGS) -o $@ $^ $(TARGETLDLIBS)
 
 config.o: config.c cmdline.h
@@ -50,9 +50,6 @@ cmdline.h: cmdline.c
 
 cmdline.c: cmdline.ggo
 	$(HOSTGENGETOPT) --input=$< --file-name=cmdline --unamed-opts
-
-tinycap: tinycap.o $(LIB)
-	$(TARGETCC) $(TARGETCFLAGS) $(TARGETLDFLAGS) -o $@ $^ $(TARGETLDLIBS)
 
 tinymix: tinymix.o $(LIB)
 	$(TARGETCC) $(TARGETCFLAGS) $(TARGETLDFLAGS) -o $@ $^ $(TARGETLDLIBS)

@@ -20,10 +20,10 @@
 #include <string.h>
 
 #include "tinyplay.h"
+#include "tinycap.h"
 
 /* defined in config.c */
 int parse_args(struct audio_tool_config *config, int *argc, char ***argv);
-
 
 int main(int argc, char* argv[])
 {
@@ -36,6 +36,9 @@ int main(int argc, char* argv[])
 	if (!ret && argc) {
 		if (strcmp(argv[0], "play") == 0) {
 			ret = tinyplay_main(&config, argc, argv);
+		} else if (strcmp(argv[0], "cap") == 0
+			   || strcmp(argv[0], "capture") == 0) {
+			ret = tinycap_main(&config, argc, argv);
 		}
 	}
 

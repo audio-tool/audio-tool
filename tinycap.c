@@ -33,6 +33,9 @@
 #include <signal.h>
 #include <string.h>
 
+#include "config.h"
+#include "tinycap.h"
+
 #define ID_RIFF 0x46464952
 #define ID_WAVE 0x45564157
 #define ID_FMT  0x20746d66
@@ -58,6 +61,7 @@ struct wav_header {
 
 int capturing = 1;
 
+static
 unsigned int capture_sample(FILE *file, unsigned int card, unsigned int device,
                             unsigned int channels, unsigned int rate,
                             unsigned int bits, unsigned int period_size,
@@ -68,7 +72,7 @@ void sigint_handler(int sig)
     capturing = 0;
 }
 
-int main(int argc, char **argv)
+int tinycap_main(const struct audio_tool_config *config, int argc, char **argv)
 {
     FILE *file;
     struct wav_header header;
@@ -80,11 +84,10 @@ int main(int argc, char **argv)
     unsigned int frames;
     unsigned int period_size = 1024;
     unsigned int period_count = 4;
-    unsigned int duration = -1;
+    unsigned int duration = 0;
 
-    if (argc < 2) {
-        fprintf(stderr, "Usage: %s file.wav [-D card] [-d device] [-c channels] "
-                "[-r rate] [-b bits] [-p period_size] [-n n_periods] [-t duration]\n", argv[0]);
+    if (argc != 2) {
+        fprintf(stderr, "Usage: audio-tool [options] capture file.wav\n");
         return 1;
     }
 
@@ -94,45 +97,14 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    /* parse command line arguments */
-    argv += 2;
-    while (*argv) {
-        if (strcmp(*argv, "-d") == 0) {
-            argv++;
-            if (*argv)
-                device = atoi(*argv);
-        } else if (strcmp(*argv, "-c") == 0) {
-            argv++;
-            if (*argv)
-                channels = atoi(*argv);
-        } else if (strcmp(*argv, "-r") == 0) {
-            argv++;
-            if (*argv)
-                rate = atoi(*argv);
-        } else if (strcmp(*argv, "-b") == 0) {
-            argv++;
-            if (*argv)
-                bits = atoi(*argv);
-        } else if (strcmp(*argv, "-D") == 0) {
-            argv++;
-            if (*argv)
-                card = atoi(*argv);
-        } else if (strcmp(*argv, "-p") == 0) {
-            argv++;
-            if (*argv)
-                period_size = atoi(*argv);
-        } else if (strcmp(*argv, "-n") == 0) {
-            argv++;
-            if (*argv)
-                period_count = atoi(*argv);
-        } else if (strcmp(*argv, "-t") == 0) {
-            argv++;
-            if (*argv)
-                duration = atoi(*argv);
-        }
-        if (*argv)
-            argv++;
-    }
+    device = config->device;
+    channels = config->channels;
+    rate = config->rate;
+    bits = config->bits;
+    card = config->card;
+    period_size = config->period_size;
+    period_count = config->num_periods;
+    duration = config->duration;
 
     header.riff_id = ID_RIFF;
     header.riff_sz = 0;
@@ -167,6 +139,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
+static
 unsigned int capture_sample(FILE *file, unsigned int card, unsigned int device,
                             unsigned int channels, unsigned int rate,
                             unsigned int bits, unsigned int period_size,
@@ -207,11 +180,14 @@ unsigned int capture_sample(FILE *file, unsigned int card, unsigned int device,
         return 0;
     }
 
-    requested = pcm_frames_to_bytes(pcm, rate * duration);
+    if (duration)
+        requested = pcm_frames_to_bytes(pcm, rate * duration);
+    else
+        requested = 0;
 
     printf("Capturing sample: %u ch, %u hz, %u bit\n", channels, rate, bits);
 
-    while (capturing && (bytes_read < requested) &&
+    while (capturing && (!requested || (bytes_read < requested)) &&
            !pcm_read(pcm, buffer, size)) {
         if (fwrite(buffer, 1, size, file) != size) {
             fprintf(stderr,"Error capturing sample\n");
