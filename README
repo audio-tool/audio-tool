@@ -75,3 +75,4 @@ IDEAS AND FUTURE DIRECTIONS
 * Test multi-port configurations (e.g. play a system tone during
   mm playback.  Capture/playback at the same time over misc. ports.
 
+* Support saving and restoring of mixer configuration (like alsaconf)
