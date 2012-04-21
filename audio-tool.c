@@ -23,6 +23,7 @@
 #include "tinycap.h"
 #include "tinymix.h"
 #include "pulse-generator.h"
+#include "tone-generator.h"
 
 /* defined in config.c */
 int parse_args(struct audio_tool_config *config, int *argc, char ***argv);
@@ -46,6 +47,8 @@ int main(int argc, char* argv[])
 			ret = tinymix_main(&config, argc, argv);
 		} else if (strcmp(argv[0], "pulse") == 0) {
 			ret = pulse_generator_main(&config, argc, argv);
+		} else if (strcmp(argv[0], "tone") == 0) {
+			ret = tone_generator_main(&config, argc, argv);
 		} else {
 			usage();
 			ret = 1;

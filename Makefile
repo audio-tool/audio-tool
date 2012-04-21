@@ -36,9 +36,11 @@ LIB_OBJECTS = \
 	mixer.o \
 	pcm.o \
 	pulse-generator.o \
+	tone-generator.o \
+	oscillator-table.o \
 
 
-all: $(TARGETS) all_tone_generator
+all: $(TARGETS)
 
 audio-tool: audio-tool.o config.o cmdline.o $(LIB)
 	$(TARGETCC) $(TARGETCFLAGS) $(TARGETLDFLAGS) -o $@ $^ $(TARGETLDLIBS)
@@ -85,11 +87,6 @@ TONEGEN_TABLE_TARGETS = table_square.c \
 	table_triangle.c \
 	table_sawtooth.c
 
-# Note: tone-generator depends on the wave tables, so
-# they appear first in this list rather than writing
-# a rule for each target.
-all_tone_generator: $(TONEGEN_TABLE_TARGETS) $(TONEGEN_EXE_TARGETS)
-
 clean_tone_generator:
 	-rm -f $(TONEGEN_EXE_TARGETS) *.o
 	-rm -f $(TONEGEN_TABLE_TARGETS)
@@ -104,9 +101,6 @@ generate-wave-table.o: generate-wave-table.c
 
 table_%.c: generate-wave-table
 	./generate-wave-table $* $(TONEGEN_WAVE_LENGTH) > $@
-
-tone-generator: tone-generator.o oscillator-table.o
-	$(TARGETCC) $(TARGETCFLAGS) $(TARGETLDFLAGS) -o $@ $^ $(TARGETLDLIBS)
 
 tone-generator.o: tone-generator.c $(TONEGEN_TABLE_TARGETS)
 	$(TARGETCC) -c $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) -o $@ $<

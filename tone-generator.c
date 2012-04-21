@@ -40,6 +40,9 @@
 #include <tinyalsa/asoundlib.h>
 #include "oscillator-table.h"
 
+#include "config.h"
+#include "tone-generator.h"
+
 /* LOAD ALL THE WAVE TABLES
  *
  * WAVE TABLE ASSUMPTIONS:
@@ -76,7 +79,7 @@ static struct wave_table g_wave_tables[] = {
 	{ 0 }
 };
 
-int check_wave_tables()
+static int check_wave_tables()
 {
 	assert( sizeof(g_table_square_wave_data) / sizeof(int16_t) <= 0xFFFF );
 	assert( sizeof(g_table_sine_wave_data) / sizeof(int16_t) <= 0xFFFF );
@@ -97,7 +100,7 @@ struct tone_generator_config {
 	uint32_t chan_mask;
 };
 
-int inner_main(struct tone_generator_config config)
+static int inner_main(struct tone_generator_config config)
 {
 	struct pcm_config *pcm_config = &config.pcm_config;
 	struct pcm *pcm;
@@ -123,7 +126,7 @@ int inner_main(struct tone_generator_config config)
 		return 1;
 	}
 
-	for (pos=0 ; pos < config.duration ; pos += pcm_config->period_size) {
+	for (pos=0 ; (!config.duration || (pos < config.duration)) ; pos += pcm_config->period_size) {
 		oscillator_table_render(buf,
 			config.wave_table,
 			pos,
@@ -145,23 +148,21 @@ int inner_main(struct tone_generator_config config)
 	return 0;
 }
 
-void usage()
+static void usage()
 {
 	struct wave_table *ptr;
 
-	printf("Usage: tone-generator <wave_type> <frequency> <duration> <vol_db> [-D card] [-d device] \\\n");
-	printf("                [-p period_size] [-n num_periods] [-r rate] [-c chans] \\\n");
-	printf("                [-m chan_mask] [-t duration_override] \\\n");
+	printf("Usage: audio-tool [options] tone <wave_type> <frequency> [<vol_db>]\n");
+	printf("\n");
 	printf("wave_type:\n");
 	for (ptr=g_wave_tables ; ptr->name ; ++ptr) {
 		printf("    %s\n", ptr->name);
 	}
 	printf("frequency: non-negative real number\n");
-	printf("duration: time in seconds (real number)\n");
-	printf("vol_db: Volume in dB FS (must be <= 0)\n");
+	printf("vol_db: (optional) Volume attenuation in dB FS (implied negative, must be >= 0, default=0)\n");
 }
 
-int main(int argc, char* argv[])
+int tone_generator_main(const struct audio_tool_config *at_config, int argc, char* argv[])
 {
 	struct tone_generator_config config = {
 		.card = 0,
@@ -172,12 +173,12 @@ int main(int argc, char* argv[])
 	struct wave_table *ptr, *table;
 	struct wave_scale wave_scale;
 	double freq;
-	char *arg_wave_type, *arg_freq, *arg_duration, *arg_voldb;
+	char *arg_wave_type, *arg_freq, *arg_voldb;
 	double tmp;
 
-	if (argc < 5) {
+	if ((argc < 3) || (argc > 4)) {
 		usage();
-		return 0;
+		return 1;
 	}
 
 	if (check_wave_tables())
@@ -185,70 +186,23 @@ int main(int argc, char* argv[])
 
 	arg_wave_type = argv[1];
 	arg_freq = argv[2];
-	arg_duration = argv[3];
-	arg_voldb = argv[4];
+	if (argc > 3)
+		arg_voldb = argv[3];
+	else
+		arg_voldb = "0";
 
 	/* Set sane defaults */
 	memset(&pcm_config, 0, sizeof(struct pcm_config));
-	pcm_config.channels = 2;
-	pcm_config.rate = 48000;
-	pcm_config.period_size = 1024;
-	pcm_config.period_count = 4;
 	pcm_config.format = PCM_FORMAT_S16_LE;
-	config.duration = pcm_config.rate * 3;
 
-	argv += 5;
-	while (*argv) {
-		if (strcmp(*argv, "-d") == 0) {
-			argv++;
-			if (*argv)
-				config.device = atoi(*argv);
-		}
-		if (strcmp(*argv, "-D") == 0) {
-			argv++;
-			if (*argv)
-				config.card = atoi(*argv);
-		}
-		if (strcmp(*argv, "-p") == 0) {
-			argv++;
-			if (*argv)
-				pcm_config.period_size = atoi(*argv);
-		}
-		if (strcmp(*argv, "-n") == 0) {
-			argv++;
-			if (*argv)
-				pcm_config.period_count = atoi(*argv);
-		}
-		if (strcmp(*argv, "-r") == 0) {
-			argv++;
-			if (*argv)
-				pcm_config.rate = atoi(*argv);
-		}
-		if (strcmp(*argv, "-c") == 0) {
-			argv++;
-			if (*argv)
-				pcm_config.channels = atoi(*argv);
-		}
-		if (strcmp(*argv, "-t") == 0) {
-			argv++;
-			if (*argv)
-				arg_duration = *argv;
-		}
-		if (strcmp(*argv, "-m") == 0) {
-			argv++;
-			if (*argv) {
-				if (strncmp("0x", *argv, 2) == 0) {
-					config.chan_mask = strtol(*argv, 0, 16);
-				} else if (strncmp("0", *argv, 1) == 0) {
-					config.chan_mask = strtol(*argv, 0, 8);
-				} else {
-					config.chan_mask = atoi(*argv);
-				}
-			}
-		}
-		if (*argv)
-			argv++;
-	}
+	config.device = at_config->device;
+	config.card = at_config->card;
+	pcm_config.period_size = at_config->period_size;
+	pcm_config.period_count = at_config->num_periods;
+	pcm_config.rate = at_config->rate;
+	pcm_config.channels = at_config->channels;
+	config.chan_mask = at_config->channel_mask;
+	config.duration = at_config->duration * pcm_config.rate;
 
 	for (ptr = g_wave_tables ; ptr->name ; ++ptr) {
 		if (strcmp(arg_wave_type, ptr->name) == 0) {
@@ -270,19 +224,13 @@ int main(int argc, char* argv[])
 	}
 	freq = tmp;
 
-	tmp = atof(arg_duration);
-	if (tmp < 0.0) {
-		fprintf(stderr, "Error: invalid duration, must be >= 0\n");
-		return 1;
-	}
-	config.duration = pcm_config.rate * tmp;
-
 	tmp = atof(arg_voldb);
-	if (tmp > 0 ) {
-		fprintf(stderr, "Volume must be less than 0 dB FS\n");
+	if (tmp < 0 ) {
+		fprintf(stderr, "Volume attenuation must be greater than 0 dB FS\n");
 		return 1;
 	}
 	/* Convert db to fraction */
+	tmp = -tmp;
 	tmp = pow(10.0, tmp/10.0);
 	config.volume = (unsigned short) (tmp * ((double)USHRT_MAX));
 
