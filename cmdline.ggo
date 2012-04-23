@@ -8,6 +8,7 @@ Commands:
 	mix <ctrl#> <value> - manipulate the ALSA mixer
 	tone <wave> <freq> <vol dB> - generate a tone (sine wave, square wave, etc)
 	pulse - generate impulses on the period boundaries
+	save - save current mixer state to a file
 "
 
 section "Options"
