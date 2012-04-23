@@ -65,3 +65,11 @@ option "rate" r
        int
        default="48000"
        optional
+
+section "Copyrights"
+
+text "
+Copyright 2012 Texas Instruments Incorporated
+Copyright 2011 The Android Open Source Project
+Copyright 2011 Gabriel M. Beddingfield
+"
