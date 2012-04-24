@@ -92,6 +92,8 @@ int main(int argc, char* argv[])
 			ret = tone_generator_main(&config, argc, argv);
 		} else if (strcmp(argv[0], "save") == 0) {
 			ret = save_main(&config, argc, argv);
+		} else if (strcmp(argv[0], "restore") == 0) {
+			ret = restore_main(&config, argc, argv);
 		} else {
 			usage();
 			ret = 1;

@@ -48,6 +48,7 @@ LIB_OBJECTS = \
 	tone-generator.o \
 	oscillator-table.o \
 	save.o \
+	restore.o \
 
 
 all: $(TARGETS)

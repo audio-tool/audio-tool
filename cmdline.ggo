@@ -9,6 +9,7 @@ Commands:
 	tone <wave> <freq> <vol dB> - generate a tone (sine wave, square wave, etc)
 	pulse - generate impulses on the period boundaries
 	save - save current mixer state to a file
+	restore - restore mixer state from a file
 "
 
 section "Options"
