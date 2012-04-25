@@ -46,6 +46,7 @@
 #include "pulse-generator.h"
 #include "tone-generator.h"
 #include "save.h"
+#include "restore.h"
 
 /* defined in config.c */
 int parse_args(struct audio_tool_config *config, int *argc, char ***argv);
