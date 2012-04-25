@@ -49,6 +49,7 @@ LIB_OBJECTS = \
 	oscillator-table.o \
 	save.o \
 	restore.o \
+	mixer_cache.o \
 
 
 all: $(TARGETS)
