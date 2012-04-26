@@ -10,6 +10,7 @@ Commands:
 	pulse - generate impulses on the period boundaries
 	save - save current mixer state to a file
 	restore - restore mixer state from a file
+	defaults - put card in audio-tool's 'default' state
 "
 
 section "Options"

@@ -47,6 +47,7 @@
 #include "tone-generator.h"
 #include "save.h"
 #include "restore.h"
+#include "defaults.h"
 
 /* defined in config.c */
 int parse_args(struct audio_tool_config *config, int *argc, char ***argv);
@@ -95,6 +96,8 @@ int main(int argc, char* argv[])
 			ret = save_main(&config, argc, argv);
 		} else if (strcmp(argv[0], "restore") == 0) {
 			ret = restore_main(&config, argc, argv);
+		} else if (strcmp(argv[0], "defaults") == 0) {
+			ret = defaults_main(&config, argc, argv);
 		} else {
 			usage();
 			ret = 1;

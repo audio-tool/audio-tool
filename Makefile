@@ -51,6 +51,7 @@ LIB_OBJECTS = \
 	restore.o \
 	mixer_cache.o \
 	module.o \
+	defaults.o \
 	alsa-control.o \
 
 MODULES = \
