@@ -51,6 +51,7 @@ LIB_OBJECTS = \
 	restore.o \
 	mixer_cache.o \
 	module.o \
+	alsa-control.o \
 
 
 all: $(TARGETS)
