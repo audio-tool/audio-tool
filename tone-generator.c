@@ -107,7 +107,7 @@ static int inner_main(struct tone_generator_config config)
 	unsigned pos;
 	int16_t *buf;
 
-	pcm = pcm_open(0, 0, PCM_OUT, pcm_config);
+	pcm = pcm_open(config.card, config.device, PCM_OUT, pcm_config);
 	if (!pcm) {
 		fprintf(stderr, "Could not open sound card\n");
 		fprintf(stderr, "%s\n", pcm_get_error(pcm));
