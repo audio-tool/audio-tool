@@ -50,6 +50,7 @@ LIB_OBJECTS = \
 	save.o \
 	restore.o \
 	mixer_cache.o \
+	module.o \
 
 
 all: $(TARGETS)
