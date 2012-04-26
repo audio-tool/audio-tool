@@ -53,10 +53,13 @@ LIB_OBJECTS = \
 	module.o \
 	alsa-control.o \
 
+MODULES = \
+	card-omap45.o \
+
 
 all: $(TARGETS)
 
-audio-tool: audio-tool.o config.o cmdline.o $(LIB)
+audio-tool: audio-tool.o config.o cmdline.o $(LIB) $(MODULES)
 	$(TARGETCC) $(TARGETCFLAGS) $(TARGETLDFLAGS) -o $@ $^ $(TARGETLDLIBS)
 
 config.o: config.c cmdline.h
