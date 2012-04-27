@@ -93,11 +93,13 @@ struct audio_tool_module* audio_tool_get_module(int module_type,
 		if (node->module->type != module_type)
 			continue;
 
-		if (optional_name && (0 == strcmp(node->module->name, optional_name)))
-			break;
-
-		if (!node->module->probe())
-			break;
+		if (optional_name) {
+			if(!strcmp(node->module->name, optional_name))
+				break;
+		} else {
+			if (!node->module->probe())
+				break;
+		}
 	}
 
 	if (node)
