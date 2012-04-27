@@ -57,7 +57,8 @@ LIB_OBJECTS = \
 MODULES = \
 	card-omap45.o \
 	card-sdp4430.o \
-
+	card-hdmi.o \
+	card-omap4hdmi.o \
 
 all: $(TARGETS)
 
