@@ -56,6 +56,7 @@ LIB_OBJECTS = \
 
 MODULES = \
 	card-omap45.o \
+	card-sdp4430.o \
 
 
 all: $(TARGETS)
