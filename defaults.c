@@ -106,6 +106,12 @@ int defaults_main(const struct audio_tool_config *config, int argc, char **argv)
 	if (card_mod->get_mixer_defaults(&cache)) {
 		fprintf(stderr, "Error: could not get mixer defaults\n");
 		ret = 1;
+		/*goto mixer_cache_pop_err;*/
+	}
+
+	if (mixer_cache_apply(&cache, mixer)) {
+		fprintf(stderr, "Error: could not apply mixer setting\n");
+		ret = 1;
 		goto mixer_cache_pop_err;
 	}
 

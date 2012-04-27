@@ -37,6 +37,7 @@
 #ifndef __AUDIO_TOOL_MIXER_CACHE_H__
 #define __AUDIO_TOOL_MIXER_CACHE_H__
 
+#include <stdint.h>
 #include <tinyalsa/asoundlib.h>
 
 /* In kernel this is typically 44 */
@@ -55,11 +56,21 @@ int mixer_cache_get_id_by_name(struct audio_tool_mixer_cache *cache, const char*
 void mixer_cache_reset_touch(struct audio_tool_mixer_cache *cache);
 void mixer_cache_touch(struct audio_tool_mixer_cache *cache, int id);
 int mixer_cache_audit_touch(struct audio_tool_mixer_cache *cache, int verbose);
+int mixer_cache_apply(struct audio_tool_mixer_cache *cache, struct mixer *mixer);
+
+#define MAX_NUM_VALUES 8
 
 struct audio_tool_mixer_control_info {
 	unsigned id;
 	char name[AUDIO_TOOL_MIX_CTL_NAME_MAX];
 	enum mixer_ctl_type type;
+	unsigned num_values;
+	union {
+		long integer[128];
+		int64_t integer64[64];
+		char enumerated[MAX_NUM_VALUES][64];
+		unsigned char byte[512];
+	} value;
 
 	int touch; /* For use with full-list processing */
 };
