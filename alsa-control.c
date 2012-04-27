@@ -164,10 +164,10 @@ int ah_card_find_by_name(const char* name)
         int cards = ah_card_count();
         int k;
         int match = 0;
-	LOGE("%s() looking for %s", __func__, name);
+	LOGV("%s() looking for %s", __func__, name);
         for (k = 0 ; k < cards ; ++k) {
 		ah_card_get_name(k, cur, sizeof(cur));
-		LOGE("Comparing to '%s'", cur);
+		LOGV("Comparing to '%s'", cur);
 		if ( 0 == strcmp(cur, name) ) {
 			match = 1;
 			break;
