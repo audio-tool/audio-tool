@@ -948,97 +948,6 @@ static struct audio_tool_mixer_cache g_card_mix_defaults = {
 	.ctrls = 0,
 };
 
-/* side effects: initializes g_abe_api and g_card_mix_defaults */
-static int detect_abe_api(struct audio_tool_mixer_cache *cache)
-{
-	int abe_api = ABE_API_0951;
-	int count = 0;
-	int n;
-
-	/* Detect if using 09.56 API */
-	for (n = 0 ; n < cache->count ; ++n) {
-		if (0 == strcmp("DL1 PDM_DL2 Switch", cache->ctrls[n].name)) {
-			abe_api = ABE_API_0956;
-			break;
-		}
-	}
-
-	count = sizeof(g_defaults_common) / sizeof(g_defaults_common[0]);
-	switch (abe_api) {
-	case ABE_API_0951:
-		count += sizeof(g_defaults_0951) / sizeof(g_defaults_0951[0]);
-		break;
-	case ABE_API_0956:
-		count += sizeof(g_defaults_0956) / sizeof(g_defaults_0956[0]);
-		break;
-	default:
-		assert(0);
-	}
-
-	g_card_mix_defaults.ctrls = calloc(count, sizeof(struct audio_tool_mixer_control_info));
-	memcpy(g_card_mix_defaults.ctrls, &g_defaults_common, sizeof(g_defaults_common));
-	n = sizeof(g_defaults_common) / sizeof(g_defaults_common[0]);
-	switch (abe_api) {
-	case ABE_API_0951:
-		memcpy(g_card_mix_defaults.ctrls + n, &g_defaults_0951, sizeof(g_defaults_0951));
-		break;
-	case ABE_API_0956:
-		memcpy(g_card_mix_defaults.ctrls + n, &g_defaults_0956, sizeof(g_defaults_0956));
-		break;
-	default:
-		assert(0);
-	}
-
-	g_card_mix_defaults.count = count;
-	g_abe_api = abe_api;
-
-
-	/* initialize static id's */
-	for (n = 0 ; n < g_card_mix_defaults.count ; ++n) {
-		g_card_mix_defaults.ctrls[n].id = n;
-	}
-
-	return 0;
-}
-
-static int get_mixer_defaults(struct audio_tool_mixer_cache *cache)
-{
-	struct audio_tool_mixer_cache *defs = &g_card_mix_defaults;
-	int m, n;
-	int ret = 0;
-
-	if (g_abe_api == ABE_API_NULL)
-		detect_abe_api(cache);
-
-	mixer_cache_reset_touch(defs);
-	mixer_cache_reset_touch(cache);
-
-	for (m = 0 ; m < cache->count ; ++m) {
-		n = mixer_cache_get_id_by_name(defs,
-			cache->ctrls[m].name);
-		if (n < 0) {
-			fprintf(stderr, "Warning: No default defined for %s\n", cache->ctrls[m].name);
-			ret = 1;
-			continue;
-		}
-		if (cache->ctrls[m].type != defs->ctrls[n].type) {
-			fprintf(stderr, "Warning: type mismatch on %s\n", cache->ctrls[m].name);
-			ret = 1;
-			continue;
-		}
-		memcpy(&cache->ctrls[m].value, &defs->ctrls[n].value,
-		       sizeof(g_defaults_common[0].value));
-
-		mixer_cache_touch(cache, m);
-		mixer_cache_touch(defs, n);
-	}
-
-	ret = mixer_cache_audit_touch(cache, 1) ? 1 : ret;
-	ret = mixer_cache_audit_touch(defs, 1) ? 1 : ret;
-
-	return ret;
-}
-
 static char* g_playback_frontends[] = {
 	"Multimedia",
 	"Voice",
@@ -1050,7 +959,6 @@ static char* g_playback_frontends[] = {
 static char* g_playback_backends[] = {
 	"Headset",
 	"Handsfree",
-	"HandsfreeLP",
 	"Earpiece",
 	"Bluetooth",
 	0,
@@ -1091,7 +999,7 @@ struct route_setting
  */
 
 /* For Frontend := { Multimedia, MultimediaLP }
- * For Backend := { Headset, Earpiece, Bluetooth, HandsfreeLP }
+ * For Backend := { Headset, Earpiece, Bluetooth }
  */
 static struct route_setting g_playback_multimedia_accessory_mix[] = {
 	RS_INT("DL1 Mixer Multimedia", 1),
@@ -1102,14 +1010,20 @@ static struct route_setting g_playback_multimedia_accessory_mix[] = {
 /* For Frontend := { Multimedia, MultimediaLP }
  * For Backend := { Handsfree }
  */
-static struct route_setting g_playback_multimedia_handsfree_mix[] = {
+static struct route_setting *g_playback_multimedia_handsfree_mix = 0;
+static struct route_setting g_playback_multimedia_handsfree_mix_0951[] = {
 	RS_INT("DL2 Mixer Multimedia", 1),
 	RS_INT("DL2 Media Playback Volume", 118),
 	RS_NULL,
 };
+static struct route_setting g_playback_multimedia_handsfree_mix_0956[] = {
+	RS_INT("DL1 Mixer Multimedia", 1),
+	RS_INT("DL1 Media Playback Volume", 118),
+	RS_NULL,
+};
 
 /* For Frontend := { Voice }
- * For Backend := { Headset, Earpiece, Bluetooth, HandsfreeLP }
+ * For Backend := { Headset, Earpiece, Bluetooth }
  */
 static struct route_setting g_playback_voice_accessory_mix[] = {
 	RS_INT("DL1 Mixer Voice", 1),
@@ -1120,14 +1034,20 @@ static struct route_setting g_playback_voice_accessory_mix[] = {
 /* For Frontend := { Voice }
  * For Backend := { Handsfree }
  */
-static struct route_setting g_playback_voice_handsfree_mix[] = {
+static struct route_setting *g_playback_voice_handsfree_mix = 0;
+static struct route_setting g_playback_voice_handsfree_mix_0951[] = {
 	RS_INT("DL2 Mixer Voice", 1),
 	RS_INT("DL2 Voice Playback Volume", 118),
 	RS_NULL,
 };
+static struct route_setting g_playback_voice_handsfree_mix_0956[] = {
+	RS_INT("DL1 Mixer Voice", 1),
+	RS_INT("DL1 Voice Playback Volume", 118),
+	RS_NULL,
+};
 
 /* For Frontend := { Tones }
- * For Backend := { Headset, Earpiece, Bluetooth, HandsfreeLP }
+ * For Backend := { Headset, Earpiece, Bluetooth }
  */
 static struct route_setting g_playback_tones_accessory_mix[] = {
 	RS_INT("DL1 Mixer Tones", 1),
@@ -1138,13 +1058,20 @@ static struct route_setting g_playback_tones_accessory_mix[] = {
 /* For Frontend := { Tones }
  * For Backend := { Handsfree }
  */
-static struct route_setting g_playback_tones_handsfree_mix[] = {
+static struct route_setting *g_playback_tones_handsfree_mix = 0;
+static struct route_setting g_playback_tones_handsfree_mix_0951[] = {
 	RS_INT("DL2 Mixer Tones", 1),
 	RS_INT("DL2 Tones Playback Volume", 118),
 	RS_NULL,
 };
+static struct route_setting g_playback_tones_handsfree_mix_0956[] = {
+	RS_INT("DL1 Mixer Tones", 1),
+	RS_INT("DL1 Tones Playback Volume", 118),
+	RS_NULL,
+};
 
-static struct route_setting g_playback_be_headset_mix[] = {
+static struct route_setting *g_playback_be_headset_mix = 0;
+static struct route_setting g_playback_be_headset_mix_0951[] = {
 	RS_INT("Sidetone Mixer Playback", 1),
 	RS_INT("SDT DL Volume", 120),
 	RS_INT("DL1 PDM Switch", 1),
@@ -1153,11 +1080,29 @@ static struct route_setting g_playback_be_headset_mix[] = {
 	RS_INT("Headset Playback Volume", 13),
 	RS_NULL,
 };
+static struct route_setting g_playback_be_headset_mix_0956[] = {
+	RS_INT("Sidetone Mixer Playback", 1),
+	RS_INT("SDT DL Volume", 120),
+	RS_INT("DL1 PDM_DL1 Switch", 1),
+	RS_ENUM("Headset Left Playback", "HS DAC"),
+	RS_ENUM("Headset Right Playback", "HS DAC"),
+	RS_INT("Headset Playback Volume", 13),
+	RS_NULL,
+};
 
-static struct route_setting g_playback_be_earpiece_mix[] = {
+static struct route_setting *g_playback_be_earpiece_mix = 0;
+static struct route_setting g_playback_be_earpiece_mix_0951[] = {
 	RS_INT("Sidetone Mixer Playback", 1),
 	RS_INT("SDT DL Volume", 120),
 	RS_INT("DL1 PDM Switch", 1),
+	RS_INT("Earphone Playback Switch", 1),
+	RS_INT("Earphone Playback Volume", 13),
+	RS_NULL,
+};
+static struct route_setting g_playback_be_earpiece_mix_0956[] = {
+	RS_INT("Sidetone Mixer Playback", 1),
+	RS_INT("SDT DL Volume", 120),
+	RS_INT("DL1 PDM_DL1 Switch", 1),
 	RS_INT("Earphone Playback Switch", 1),
 	RS_INT("Earphone Playback Volume", 13),
 	RS_NULL,
@@ -1171,17 +1116,17 @@ static struct route_setting g_playback_be_bluetooth_mix[] = {
 	RS_NULL,
 };
 
-static struct route_setting g_playback_be_handsfree_mix[] = {
+static struct route_setting *g_playback_be_handsfree_mix = 0;
+static struct route_setting g_playback_be_handsfree_mix_0951[] = {
 	RS_ENUM("Handsfree Left Playback", "HF DAC"),
 	RS_ENUM("Handsfree Right Playback", "HF DAC"),
 	RS_INT("Handsfree Playback Volume", 23),
 	RS_NULL,
 };
-
-static struct route_setting g_playback_be_handsfreelp_mix[] = {
+static struct route_setting g_playback_be_handsfree_mix_0956[] = {
 	RS_INT("Sidetone Mixer Playback", 1),
 	RS_INT("SDT DL Volume", 120),
-	RS_INT("DL1 PDM_DL2 Switch", 1),
+	RS_INT("DL1 PDM_DL1 Switch", 1),
 	RS_ENUM("Handsfree Left Playback", "HF DAC"),
 	RS_ENUM("Handsfree Right Playback", "HF DAC"),
 	RS_INT("Handsfree Playback Volume", 23),
@@ -1355,6 +1300,119 @@ static struct route_setting g_capture_be_dmic2_mix[] = {
 	RS_NULL,
 };
 
+/* side effects: initializes g_abe_api and g_card_mix_defaults */
+static int detect_abe_api(struct audio_tool_mixer_cache *cache)
+{
+	int abe_api = ABE_API_0951;
+	int count = 0;
+	int n;
+
+	/* Detect if using 09.56 API */
+	for (n = 0 ; n < cache->count ; ++n) {
+		if (0 == strcmp("DL1 PDM_DL2 Switch", cache->ctrls[n].name)) {
+			abe_api = ABE_API_0956;
+			break;
+		}
+	}
+
+	count = sizeof(g_defaults_common) / sizeof(g_defaults_common[0]);
+	switch (abe_api) {
+	case ABE_API_0951:
+		count += sizeof(g_defaults_0951) / sizeof(g_defaults_0951[0]);
+		break;
+	case ABE_API_0956:
+		count += sizeof(g_defaults_0956) / sizeof(g_defaults_0956[0]);
+		break;
+	default:
+		assert(0);
+	}
+
+	g_card_mix_defaults.ctrls = calloc(count, sizeof(struct audio_tool_mixer_control_info));
+	memcpy(g_card_mix_defaults.ctrls, &g_defaults_common, sizeof(g_defaults_common));
+	n = sizeof(g_defaults_common) / sizeof(g_defaults_common[0]);
+	switch (abe_api) {
+	case ABE_API_0951:
+		memcpy(g_card_mix_defaults.ctrls + n, &g_defaults_0951, sizeof(g_defaults_0951));
+		break;
+	case ABE_API_0956:
+		memcpy(g_card_mix_defaults.ctrls + n, &g_defaults_0956, sizeof(g_defaults_0956));
+		break;
+	default:
+		assert(0);
+	}
+
+	g_card_mix_defaults.count = count;
+	g_abe_api = abe_api;
+
+
+	/* initialize static id's */
+	for (n = 0 ; n < g_card_mix_defaults.count ; ++n) {
+		g_card_mix_defaults.ctrls[n].id = n;
+	}
+
+	/* Set up the routes */
+	switch (abe_api) {
+	case ABE_API_0951:
+		g_playback_multimedia_handsfree_mix = g_playback_multimedia_handsfree_mix_0951;
+		g_playback_voice_handsfree_mix = g_playback_voice_handsfree_mix_0951;
+		g_playback_tones_handsfree_mix = g_playback_tones_handsfree_mix_0951;
+		g_playback_be_headset_mix = g_playback_be_headset_mix_0951;
+		g_playback_be_earpiece_mix = g_playback_be_earpiece_mix_0951;
+		g_playback_be_handsfree_mix = g_playback_be_handsfree_mix_0951;
+		break;
+	case ABE_API_0956:
+		g_playback_multimedia_handsfree_mix = g_playback_multimedia_handsfree_mix_0956;
+		g_playback_voice_handsfree_mix = g_playback_voice_handsfree_mix_0956;
+		g_playback_tones_handsfree_mix = g_playback_tones_handsfree_mix_0956;
+		g_playback_be_headset_mix = g_playback_be_headset_mix_0956;
+		g_playback_be_earpiece_mix = g_playback_be_earpiece_mix_0956;
+		g_playback_be_handsfree_mix = g_playback_be_handsfree_mix_0956;
+		break;
+	default:
+		assert(0);
+	}
+
+	return 0;
+}
+
+static int get_mixer_defaults(struct audio_tool_mixer_cache *cache)
+{
+	struct audio_tool_mixer_cache *defs = &g_card_mix_defaults;
+	int m, n;
+	int ret = 0;
+
+	if (g_abe_api == ABE_API_NULL)
+		detect_abe_api(cache);
+
+	mixer_cache_reset_touch(defs);
+	mixer_cache_reset_touch(cache);
+
+	for (m = 0 ; m < cache->count ; ++m) {
+		n = mixer_cache_get_id_by_name(defs,
+			cache->ctrls[m].name);
+		if (n < 0) {
+			fprintf(stderr, "Warning: No default defined for %s\n", cache->ctrls[m].name);
+			ret = 1;
+			continue;
+		}
+		if (cache->ctrls[m].type != defs->ctrls[n].type) {
+			fprintf(stderr, "Warning: type mismatch on %s\n", cache->ctrls[m].name);
+			ret = 1;
+			continue;
+		}
+		memcpy(&cache->ctrls[m].value, &defs->ctrls[n].value,
+		       sizeof(g_defaults_common[0].value));
+
+		mixer_cache_touch(cache, m);
+		mixer_cache_touch(defs, n);
+	}
+
+	ret = mixer_cache_audit_touch(cache, 1) ? 1 : ret;
+	ret = mixer_cache_audit_touch(defs, 1) ? 1 : ret;
+
+	return ret;
+}
+
 static int set_route_by_array(struct mixer *mixer, struct route_setting *route,
                               int enable)
 {
@@ -1412,7 +1470,6 @@ static int get_fe_be_names(int direction, char ***fes, char ***bes)
 
 #define BE_P_HS 0
 #define BE_P_HF 1
-#define BE_P_HFLP 2
 #define BE_P_EP 3
 #define BE_P_BT 4
 
@@ -1454,8 +1511,6 @@ static int config_playback(struct mixer *mixer, const char* fe,
 		b = BE_P_HS;
 	} else if (0 == strcmp(be, "Handsfree")) {
 		b = BE_P_HF;
-	} else if (0 == strcmp(be, "HandsfreeLP")) {
-		b = BE_P_HFLP;
 	} else if (0 == strcmp(be, "Earpiece")) {
 		b = BE_P_EP;
 	} else if (0 == strcmp(be, "Bluetooth")) {
@@ -1508,10 +1563,6 @@ static int config_playback(struct mixer *mixer, const char* fe,
 	case BE_P_HF:
 		ret = set_route_by_array(mixer,
 				g_playback_be_handsfree_mix, enable);
-		break;
-	case BE_P_HFLP:
-		ret = set_route_by_array(mixer,
-				g_playback_be_handsfreelp_mix, enable);
 		break;
 	case BE_P_EP:
 		ret = set_route_by_array(mixer,
@@ -1689,6 +1740,20 @@ static int config_capture(struct mixer *mixer, const char* fe,
 static int config(struct mixer *mixer, int direction, const char* fe,
 	const char* be, int enable, int *optional_port)
 {
+	if (g_abe_api == ABE_API_NULL) {
+		struct audio_tool_mixer_cache cache;
+		mixer_cache_init(&cache);
+		if(mixer_cache_populate(&cache, mixer)) {
+			fprintf(stderr, "Error: could not populate mixer cache for card\n");
+			return ENODEV;
+		}
+		if(detect_abe_api(&cache)) {
+			fprintf(stderr, "Error: could not detect ABE version\n");
+			return ENODEV;
+		}
+		mixer_cache_deinit(&cache);
+	}
+
 	if (direction == AUDIO_DIRECTION_PLAYBACK) {
 		return config_playback(mixer, fe, be, enable, optional_port);
 	} else {
