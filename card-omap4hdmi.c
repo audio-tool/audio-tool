@@ -80,11 +80,24 @@ static int probe(void)
 
 }
 
+static int get_fe_be_names(int direction, char ***fes, char ***bes)
+{
+	return ENODEV;
+}
+
+static int config(struct mixer* mixer, int direction, const char* fe,
+	 const char* be, int enable, int *optional_port)
+{
+	return ENODEV;
+}
+
 static struct audio_tool_card_module g_omap4hdmi_mod = {
 	.type = AUDIO_TOOL_MOD_TYPE_CARD,
 	.name = CARD_OMAP4HDMI_CARD_NAME,
 	.probe = probe,
 	.get_mixer_defaults = get_mixer_defaults,
+	.get_fe_be_names = get_fe_be_names,
+	.config = config,
 };
 
 static void __init init(void)

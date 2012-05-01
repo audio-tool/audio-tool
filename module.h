@@ -40,6 +40,7 @@
 struct audio_tool_module;
 struct audio_tool_board_module;
 struct audio_tool_mixer_cache;
+struct mixer;
 
 #ifndef __GNUC__
 #error The module interface requires GCCs constructor/destructor attributes.
@@ -67,6 +68,9 @@ struct audio_tool_module {
 	int (*probe)(void);
 };
 
+#define AUDIO_DIRECTION_PLAYBACK	0
+#define AUDIO_DIRECTION_CAPTURE		1
+
 struct audio_tool_card_module {
 	int type;
 	const char* name;
@@ -78,6 +82,16 @@ struct audio_tool_card_module {
 	 * it with default values.  Returns 0 on success.
 	 */
 	int (*get_mixer_defaults)(struct audio_tool_mixer_cache *cache);
+
+	/* Required: Supply front-ends and back-ends this card supports.
+	 * direction: 0 for playback, 1 for capture
+	 * Returns: fes and bes point to static, null-terminated array of strings
+	 */
+	int (*get_fe_be_names)(int direction, char ***fes, char ***bes);
+
+	/* Required */
+	int (*config)(struct mixer *mixer, int direction, const char* fe,
+		const char* be, int enable, int *optional_port);
 };
 
 #endif /* __OMAP_AUDIO_TOOL_MODULE_H__ */

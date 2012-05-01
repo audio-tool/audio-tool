@@ -35,6 +35,9 @@
  */
 #ifndef __AUDIO_TOOL_CARD_OMAP_COMMON_4_5_H__
 #define __AUDIO_TOOL_CARD_OMAP_COMMON_4_5_H__
+#else
+#error This file should be treated as code and not as a header.
+#endif
 
 /*
  * Code common between cards SDP4430 and OMAP45
@@ -43,6 +46,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include <tinyalsa/asoundlib.h>
 
 #include "alsa-control.h"
@@ -890,4 +894,906 @@ static int get_mixer_defaults(struct audio_tool_mixer_cache *cache)
 	return ret;
 }
 
-#endif /* __AUDIO_TOOL_CARD_OMAP_COMMON_4_5_H__ */
+static char* g_playback_frontends[] = {
+	"Multimedia",
+	"Voice",
+	"Tones",
+	"MultimediaLP",
+	0,
+};
+
+static char* g_playback_backends[] = {
+	"Headset",
+	"Handsfree",
+	"HandsfreeLP",
+	"Earpiece",
+	"Bluetooth",
+	0,
+};
+
+static char *g_capture_frontends[] = {
+	"Multimedia",
+	"Multimedia2",
+	"Voice",
+	0,
+};
+
+static char *g_capture_backends[] = {
+	"HeadsetMic",
+	"OnboardMic",
+	"Aux/FM",
+	"DMic0",
+	"DMic1",
+	"DMic2",
+	"Bluetooth",
+	0,
+};
+
+struct route_setting
+{
+	char *ctl_name;
+	int intval;
+	char *strval;
+};
+
+#define RS_INT(str, val) { .ctl_name = str, .intval = val }
+#define RS_ENUM(str, val) { .ctl_name = str, .strval = val }
+#define RS_NULL { 0, 0, 0, }
+
+/***************************************************************************
+ * PLAYBACK ROUTE SETTINGS
+ ***************************************************************************
+ */
+
+/* For Frontend := { Multimedia, MultimediaLP }
+ * For Backend := { Headset, Earpiece, Bluetooth, HandsfreeLP }
+ */
+static struct route_setting g_playback_multimedia_accessory_enable[] = {
+	RS_INT("DL1 Mixer Multimedia", 1),
+	RS_INT("DL1 Media Playback Volume", 118),
+	RS_NULL,
+};
+
+/* For Frontend := { Multimedia, MultimediaLP }
+ * For Backend := { Headset, Earpiece, Bluetooth, HandsfreeLP }
+ */
+static struct route_setting g_playback_multimedia_accessory_disable[] = {
+	RS_INT("DL1 Mixer Multimedia", 0),
+	RS_INT("DL1 Media Playback Volume", 0),
+	RS_NULL,
+};
+
+/* For Frontend := { Multimedia, MultimediaLP }
+ * For Backend := { Handsfree }
+ */
+static struct route_setting g_playback_multimedia_handsfree_enable[] = {
+	RS_INT("DL2 Mixer Multimedia", 1),
+	RS_INT("DL2 Media Playback Volume", 118),
+	RS_NULL,
+};
+
+/* For Frontend := { Multimedia, MultimediaLP }
+ * For Backend := { Handsfree }
+ */
+static struct route_setting g_playback_multimedia_handsfree_disable[] = {
+	RS_INT("DL2 Mixer Multimedia", 0),
+	RS_INT("DL2 Media Playback Volume", 0),
+	RS_NULL,
+};
+
+/* For Frontend := { Voice }
+ * For Backend := { Headset, Earpiece, Bluetooth, HandsfreeLP }
+ */
+static struct route_setting g_playback_voice_accessory_enable[] = {
+	RS_INT("DL1 Mixer Voice", 1),
+	RS_INT("DL1 Voice Playback Volume", 118),
+	RS_NULL,
+};
+
+/* For Frontend := { Voice }
+ * For Backend := { Headset, Earpiece, Bluetooth, HandsfreeLP }
+ */
+static struct route_setting g_playback_voice_accessory_disable[] = {
+	RS_INT("DL1 Mixer Voice", 0),
+	RS_INT("DL1 Voice Playback Volume", 0),
+	RS_NULL,
+};
+
+/* For Frontend := { Voice }
+ * For Backend := { Handsfree }
+ */
+static struct route_setting g_playback_voice_handsfree_enable[] = {
+	RS_INT("DL2 Mixer Voice", 1),
+	RS_INT("DL2 Voice Playback Volume", 118),
+	RS_NULL,
+};
+
+/* For Frontend := { Voice }
+ * For Backend := { Handsfree }
+ */
+static struct route_setting g_playback_voice_handsfree_disable[] = {
+	RS_INT("DL2 Mixer Voice", 0),
+	RS_INT("DL2 Voice Playback Volume", 0),
+	RS_NULL,
+};
+
+/* For Frontend := { Tones }
+ * For Backend := { Headset, Earpiece, Bluetooth, HandsfreeLP }
+ */
+static struct route_setting g_playback_tones_accessory_enable[] = {
+	RS_INT("DL1 Mixer Tones", 1),
+	RS_INT("DL1 Tones Playback Volume", 118),
+	RS_NULL,
+};
+
+/* For Frontend := { Tones }
+ * For Backend := { Headset, Earpiece, Bluetooth, HandsfreeLP }
+ */
+static struct route_setting g_playback_tones_accessory_disable[] = {
+	RS_INT("DL1 Mixer Tones", 0),
+	RS_INT("DL1 Tones Playback Volume", 0),
+	RS_NULL,
+};
+
+/* For Frontend := { Tones }
+ * For Backend := { Handsfree }
+ */
+static struct route_setting g_playback_tones_handsfree_enable[] = {
+	RS_INT("DL2 Mixer Tones", 1),
+	RS_INT("DL2 Tones Playback Volume", 118),
+	RS_NULL,
+};
+
+/* For Frontend := { Tones }
+ * For Backend := { Handsfree }
+ */
+static struct route_setting g_playback_tones_handsfree_disable[] = {
+	RS_INT("DL2 Mixer Tones", 0),
+	RS_INT("DL2 Tones Playback Volume", 0),
+	RS_NULL,
+};
+
+static struct route_setting g_playback_be_headset_enable[] = {
+	RS_INT("Sidetone Mixer Playback", 1),
+	RS_INT("SDT DL Volume", 120),
+	RS_INT("DL1 PDM Switch", 1),
+	RS_ENUM("Headset Left Playback", "HS DAC"),
+	RS_ENUM("Headset Right Playback", "HS DAC"),
+	RS_INT("Headset Playback Volume", 13),
+	RS_NULL,
+};
+
+static struct route_setting g_playback_be_headset_disable[] = {
+	RS_INT("Sidetone Mixer Playback", 0),
+	RS_INT("SDT DL Volume", 0),
+	RS_INT("DL1 PDM Switch", 0),
+	RS_ENUM("Headset Left Playback", "Off"),
+	RS_ENUM("Headset Right Playback", "Off"),
+	RS_INT("Headset Playback Volume", 0),
+	RS_NULL,
+};
+
+static struct route_setting g_playback_be_earpiece_enable[] = {
+	RS_INT("Sidetone Mixer Playback", 1),
+	RS_INT("SDT DL Volume", 120),
+	RS_INT("DL1 PDM Switch", 1),
+	RS_INT("Earphone Playback Switch", 1),
+	RS_INT("Earphone Playback Volume", 13),
+	RS_NULL,
+};
+
+static struct route_setting g_playback_be_earpiece_disable[] = {
+	RS_INT("Sidetone Mixer Playback", 0),
+	RS_INT("SDT DL Volume", 0),
+	RS_INT("DL1 PDM Switch", 0),
+	RS_INT("Earphone Playback Switch", 0),
+	RS_INT("Earphone Playback Volume", 0),
+	RS_NULL,
+};
+
+static struct route_setting g_playback_be_bluetooth_enable[] = {
+	RS_INT("Sidetone Mixer Playback", 1),
+	RS_INT("SDT DL Volume", 120),
+	RS_INT("DL1 BT_VX Switch", 1),
+	RS_INT("BT UL Volume", 120),
+	RS_NULL,
+};
+
+static struct route_setting g_playback_be_bluetooth_disable[] = {
+	RS_INT("Sidetone Mixer Playback", 0),
+	RS_INT("SDT DL Volume", 0),
+	RS_INT("DL1 BT_VX Switch", 0),
+	RS_INT("BT UL Volume", 0),
+	RS_NULL,
+};
+
+static struct route_setting g_playback_be_handsfree_enable[] = {
+	RS_ENUM("Handsfree Left Playback", "HF DAC"),
+	RS_ENUM("Handsfree Right Playback", "HF DAC"),
+	RS_INT("Handsfree Playback Volume", 23),
+	RS_NULL,
+};
+
+static struct route_setting g_playback_be_handsfree_disable[] = {
+	RS_ENUM("Handsfree Left Playback", "Off"),
+	RS_ENUM("Handsfree Right Playback", "Off"),
+	RS_INT("Handsfree Playback Volume", 0),
+	RS_NULL,
+};
+
+static struct route_setting g_playback_be_handsfreelp_enable[] = {
+	RS_INT("Sidetone Mixer Playback", 1),
+	RS_INT("SDT DL Volume", 120),
+	RS_INT("DL1 PDM_DL2 Switch", 1),
+	RS_ENUM("Handsfree Left Playback", "HF DAC"),
+	RS_ENUM("Handsfree Right Playback", "HF DAC"),
+	RS_INT("Handsfree Playback Volume", 23),
+	RS_NULL,
+};
+
+static struct route_setting g_playback_be_handsfreelp_disable[] = {
+	RS_INT("Sidetone Mixer Playback", 1),
+	RS_INT("SDT DL Volume", 120),
+	RS_INT("DL1 PDM_DL2 Switch", 0),
+	RS_ENUM("Handsfree Left Playback", "Off"),
+	RS_ENUM("Handsfree Right Playback", "Off"),
+	RS_INT("Handsfree Playback Volume", 0),
+	RS_NULL,
+};
+
+/***************************************************************************
+ * CAPTURE ROUTE SETTINGS
+ ***************************************************************************
+ */
+
+static struct route_setting g_capture_multimedia_amic_enable[] = {
+	RS_ENUM("MUX_UL00", "AMic0"),
+	RS_ENUM("MUX_UL01", "AMic1"),
+	RS_ENUM("MUX_UL02", "None"),
+	RS_ENUM("MUX_UL03", "None"),
+	RS_ENUM("MUX_UL04", "None"),
+	RS_ENUM("MUX_UL05", "None"),
+	RS_ENUM("MUX_UL06", "None"),
+	RS_ENUM("MUX_UL07", "None"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_multimedia_dmic0_enable[] = {
+	RS_ENUM("MUX_UL00", "DMic0L"),
+	RS_ENUM("MUX_UL01", "DMic0R"),
+	RS_ENUM("MUX_UL02", "None"),
+	RS_ENUM("MUX_UL03", "None"),
+	RS_ENUM("MUX_UL04", "None"),
+	RS_ENUM("MUX_UL05", "None"),
+	RS_ENUM("MUX_UL06", "None"),
+	RS_ENUM("MUX_UL07", "None"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_multimedia_dmic1_enable[] = {
+	RS_ENUM("MUX_UL00", "DMic1L"),
+	RS_ENUM("MUX_UL01", "DMic1R"),
+	RS_ENUM("MUX_UL02", "None"),
+	RS_ENUM("MUX_UL03", "None"),
+	RS_ENUM("MUX_UL04", "None"),
+	RS_ENUM("MUX_UL05", "None"),
+	RS_ENUM("MUX_UL06", "None"),
+	RS_ENUM("MUX_UL07", "None"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_multimedia_dmic2_enable[] = {
+	RS_ENUM("MUX_UL00", "DMic2L"),
+	RS_ENUM("MUX_UL01", "DMic2R"),
+	RS_ENUM("MUX_UL02", "None"),
+	RS_ENUM("MUX_UL03", "None"),
+	RS_ENUM("MUX_UL04", "None"),
+	RS_ENUM("MUX_UL05", "None"),
+	RS_ENUM("MUX_UL06", "None"),
+	RS_ENUM("MUX_UL07", "None"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_multimedia_bluetooth_enable[] = {
+	RS_ENUM("MUX_UL00", "BT Left"),
+	RS_ENUM("MUX_UL01", "BT Right"),
+	RS_ENUM("MUX_UL02", "None"),
+	RS_ENUM("MUX_UL03", "None"),
+	RS_ENUM("MUX_UL04", "None"),
+	RS_ENUM("MUX_UL05", "None"),
+	RS_ENUM("MUX_UL06", "None"),
+	RS_ENUM("MUX_UL07", "None"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_multimedia_all_disable[] = {
+	RS_ENUM("MUX_UL00", "None"),
+	RS_ENUM("MUX_UL01", "None"),
+	RS_ENUM("MUX_UL02", "None"),
+	RS_ENUM("MUX_UL03", "None"),
+	RS_ENUM("MUX_UL04", "None"),
+	RS_ENUM("MUX_UL05", "None"),
+	RS_ENUM("MUX_UL06", "None"),
+	RS_ENUM("MUX_UL07", "None"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_multimedia2_amic_enable[] = {
+	RS_ENUM("MUX_UL10", "AMic0"),
+	RS_ENUM("MUX_UL11", "AMic1"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_multimedia2_dmic0_enable[] = {
+	RS_ENUM("MUX_UL10", "DMic0L"),
+	RS_ENUM("MUX_UL11", "DMic0R"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_multimedia2_dmic1_enable[] = {
+	RS_ENUM("MUX_UL10", "DMic1L"),
+	RS_ENUM("MUX_UL11", "DMic1R"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_multimedia2_dmic2_enable[] = {
+	RS_ENUM("MUX_UL10", "DMic2L"),
+	RS_ENUM("MUX_UL11", "DMic2R"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_multimedia2_bluetooth_enable[] = {
+	RS_ENUM("MUX_UL10", "BT Left"),
+	RS_ENUM("MUX_UL11", "BT Right"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_multimedia2_all_disable[] = {
+	RS_ENUM("MUX_UL10", "None"),
+	RS_ENUM("MUX_UL11", "None"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_voice_amic_enable[] = {
+	RS_ENUM("MUX_VX0", "AMic0"),
+	RS_ENUM("MUX_VX1", "AMic1"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_voice_dmic0_enable[] = {
+	RS_ENUM("MUX_VX0", "DMic0L"),
+	RS_ENUM("MUX_VX1", "DMic0R"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_voice_dmic1_enable[] = {
+	RS_ENUM("MUX_VX0", "DMic1L"),
+	RS_ENUM("MUX_VX1", "DMic1R"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_voice_dmic2_enable[] = {
+	RS_ENUM("MUX_VX0", "DMic2L"),
+	RS_ENUM("MUX_VX1", "DMic2R"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_voice_bluetooth_enable[] = {
+	RS_ENUM("MUX_VX0", "BT Left"),
+	RS_ENUM("MUX_VX1", "BT Right"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_voice_all_disable[] = {
+	RS_ENUM("MUX_VX0", "None"),
+	RS_ENUM("MUX_VX1", "None"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_be_headsetmic_enable[] = {
+	RS_INT("AMIC UL Volume", 120),
+	RS_ENUM("Analog Left Capture Route", "Headset Mic"),
+	RS_ENUM("Analog Right Capture Route", "Headset Mic"),
+	RS_INT("Capture Preamplifier Volume", 1),
+	RS_INT("Capture Volume", 4),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_be_headsetmic_disable[] = {
+	RS_INT("AMIC UL Volume", 0),
+	RS_ENUM("Analog Left Capture Route", "Off"),
+	RS_ENUM("Analog Right Capture Route", "Off"),
+	RS_INT("Capture Preamplifier Volume", 0),
+	RS_INT("Capture Volume", 0),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_be_onboardmic_enable[] = {
+	RS_INT("AMIC UL Volume", 120),
+	RS_ENUM("Analog Left Capture Route", "Main Mic"),
+	RS_ENUM("Analog Right Capture Route", "Sub Mic"),
+	RS_INT("Capture Preamplifier Volume", 1),
+	RS_INT("Capture Volume", 4),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_be_onboardmic_disable[] = {
+	RS_INT("AMIC UL Volume", 0),
+	RS_ENUM("Analog Left Capture Route", "Off"),
+	RS_ENUM("Analog Right Capture Route", "Off"),
+	RS_INT("Capture Preamplifier Volume", 0),
+	RS_INT("Capture Volume", 0),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_be_auxfm_enable[] = {
+	RS_INT("AMIC UL Volume", 120),
+	RS_ENUM("Analog Left Capture Route", "Aux/FM Left"),
+	RS_ENUM("Analog Right Capture Route", "Aux/FM Right"),
+	RS_INT("Capture Preamplifier Volume", 1),
+	RS_INT("Capture Volume", 4),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_be_auxfm_disable[] = {
+	RS_INT("AMIC UL Volume", 0),
+	RS_ENUM("Analog Left Capture Route", "Off"),
+	RS_ENUM("Analog Right Capture Route", "Off"),
+	RS_INT("Capture Preamplifier Volume", 0),
+	RS_INT("Capture Volume", 0),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_be_dmic0_enable[] = {
+	RS_INT("DMIC1 UL Volume", 140),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_be_dmic0_disable[] = {
+	RS_INT("DMIC1 UL Volume", 0),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_be_dmic1_enable[] = {
+	RS_INT("DMIC2 UL Volume", 140),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_be_dmic1_disable[] = {
+	RS_INT("DMIC2 UL Volume", 0),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_be_dmic2_enable[] = {
+	RS_INT("DMIC3 UL Volume", 140),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_be_dmic2_disable[] = {
+	RS_INT("DMIC3 UL Volume", 0),
+	RS_NULL,
+};
+
+static int set_route_by_array(struct mixer *mixer, struct route_setting *route,
+                              int enable)
+{
+    struct mixer_ctl *ctl;
+    unsigned int i, j;
+
+    /* Go through the route array and set each value */
+    i = 0;
+    while (route[i].ctl_name) {
+        ctl = mixer_get_ctl_by_name(mixer, route[i].ctl_name);
+        if (!ctl)
+            return -EINVAL;
+
+        if (route[i].strval) {
+            if (enable)
+                mixer_ctl_set_enum_by_string(ctl, route[i].strval);
+            else
+                mixer_ctl_set_enum_by_string(ctl, "Off");
+        } else {
+            /* This ensures multiple (i.e. stereo) values are set jointly */
+            for (j = 0; j < mixer_ctl_get_num_values(ctl); j++) {
+                if (enable)
+                    mixer_ctl_set_value(ctl, j, route[i].intval);
+                else
+                    mixer_ctl_set_value(ctl, j, 0);
+            }
+        }
+        i++;
+    }
+
+    return 0;
+}
+
+static int get_fe_be_names(int direction, char ***fes, char ***bes)
+{
+	if (direction == AUDIO_DIRECTION_PLAYBACK) {
+		*fes = g_playback_frontends;
+		*bes = g_playback_backends;
+	} else {
+		assert(direction == AUDIO_DIRECTION_CAPTURE);
+		*fes = g_capture_frontends;
+		*bes = g_capture_backends;
+	}
+	return 0;
+}
+
+#define FE_P_MM 0
+#define FE_P_VX 1
+#define FE_P_TONES 2
+#define FE_P_MMLP 3
+
+#define FE_C_MM 0
+#define FE_C_MM2 1
+#define FE_C_VX 2
+
+#define BE_P_HS 0
+#define BE_P_HF 1
+#define BE_P_HFLP 2
+#define BE_P_EP 3
+#define BE_P_BT 4
+
+#define BE_C_HSMIC 0
+#define BE_C_OBMIC 1
+#define BE_C_AUXFM 2
+#define BE_C_DMIC0 3
+#define BE_C_DMIC1 4
+#define BE_C_DMIC2 5
+#define BE_C_BT 6
+
+static int config_playback(struct mixer *mixer, const char* fe,
+	const char* be, int enable, int *optional_port)
+{
+	int f, b;
+	int ret = 0;
+	int port;
+
+	if (0 == strcmp(fe, "Multimedia")) {
+		f = FE_P_MM;
+		port = 0;
+	} else if (0 == strcmp(fe, "Voice")) {
+		f = FE_P_VX;
+		port = 2;
+	} else if (0 == strcmp(fe, "Tones")) {
+		f = FE_P_TONES;
+		port = 3;
+	} else if (0 == strcmp(fe, "MultimediaLP")) {
+		f = FE_P_MMLP;
+		port = 6;
+	} else {
+		return EINVAL;
+	}
+
+	if (optional_port)
+		*optional_port = port;
+
+	if (0 == strcmp(be, "Headset")) {
+		b = BE_P_HS;
+	} else if (0 == strcmp(be, "Handsfree")) {
+		b = BE_P_HF;
+	} else if (0 == strcmp(be, "HandsfreeLP")) {
+		b = BE_P_HFLP;
+	} else if (0 == strcmp(be, "Earpiece")) {
+		b = BE_P_EP;
+	} else if (0 == strcmp(be, "Bluetooth")) {
+		b = BE_P_BT;
+	} else {
+		return EINVAL;
+	}
+
+	switch (f) {
+	case FE_P_MM:
+	case FE_P_MMLP:
+		if (b == BE_P_HF) {
+			if (enable)
+				ret = set_route_by_array(mixer,
+					g_playback_multimedia_handsfree_enable, 1);
+			else
+				ret = set_route_by_array(mixer,
+					g_playback_multimedia_handsfree_disable, 1);
+		} else {
+			if (enable)
+				ret = set_route_by_array(mixer,
+					g_playback_multimedia_accessory_enable, 1);
+			else
+				ret = set_route_by_array(mixer,
+					g_playback_multimedia_accessory_disable, 1);
+		}
+		break;
+	case FE_P_VX:
+		if (b == BE_P_HF) {
+			if (enable)
+				ret = set_route_by_array(mixer,
+					g_playback_voice_handsfree_enable, 1);
+			else
+				ret = set_route_by_array(mixer,
+					g_playback_voice_handsfree_disable, 1);
+		} else {
+			if (enable)
+				ret = set_route_by_array(mixer,
+					g_playback_voice_accessory_enable, 1);
+			else
+				ret = set_route_by_array(mixer,
+					g_playback_voice_accessory_disable, 1);
+		}
+		break;
+	case FE_P_TONES:
+		if (b == BE_P_HF) {
+			if (enable)
+				ret = set_route_by_array(mixer,
+					g_playback_tones_handsfree_enable, 1);
+			else
+				ret = set_route_by_array(mixer,
+					g_playback_tones_handsfree_disable, 1);
+		} else {
+			if (enable)
+				ret = set_route_by_array(mixer,
+					g_playback_tones_accessory_enable, 1);
+			else
+				ret = set_route_by_array(mixer,
+					g_playback_tones_accessory_disable, 1);
+		}
+		break;
+	default:
+		assert(0);
+	}
+
+	if (ret)
+		return ret;
+
+	switch (b) {
+	case BE_P_HS:
+		if (enable)
+			ret = set_route_by_array(mixer,
+				g_playback_be_headset_enable, 1);
+		else
+			ret = set_route_by_array(mixer,
+				g_playback_be_headset_disable, 1);
+		break;
+	case BE_P_HF:
+		if (enable)
+			ret = set_route_by_array(mixer,
+				g_playback_be_handsfree_enable, 1);
+		else
+			ret = set_route_by_array(mixer,
+				g_playback_be_handsfree_disable, 1);
+		break;
+	case BE_P_HFLP:
+		if (enable)
+			ret = set_route_by_array(mixer,
+				g_playback_be_handsfreelp_enable, 1);
+		else
+			ret = set_route_by_array(mixer,
+				g_playback_be_handsfreelp_disable, 1);
+		break;
+	case BE_P_EP:
+		if (enable)
+			ret = set_route_by_array(mixer,
+				g_playback_be_earpiece_enable, 1);
+		else
+			ret = set_route_by_array(mixer,
+				g_playback_be_earpiece_disable, 1);
+		break;
+	case BE_P_BT:
+		if (enable)
+			ret = set_route_by_array(mixer,
+				g_playback_be_bluetooth_enable, 1);
+		else
+			ret = set_route_by_array(mixer,
+				g_playback_be_bluetooth_disable, 1);
+		break;
+	default:
+		assert(0);
+	}
+
+	return ret;
+}
+
+static int config_capture(struct mixer *mixer, const char* fe,
+	const char* be, int enable, int *optional_port)
+{
+	int f, b;
+	int ret = 0;
+	int port;
+
+	if (0 == strcmp(fe, "Multimedia")) {
+		f = FE_C_MM;
+		port = 0;
+	} else if (0 == strcmp(fe, "Multimedia2")) {
+		f = FE_C_MM2;
+		port = 1;
+	} else if (0 == strcmp(fe, "Voice")) {
+		f = FE_C_VX;
+		port = 2;
+	} else {
+		return EINVAL;
+	}
+
+	if (0 == strcmp(be, "HeadsetMic")) {
+		b = BE_C_HSMIC;
+	} else if (0 == strcmp(be, "OnboardMic")) {
+		b = BE_C_OBMIC;
+	} else if (0 == strcmp(be, "Aux/FM")) {
+		b = BE_C_AUXFM;
+	} else if (0 == strcmp(be, "DMic0")) {
+		b = BE_C_DMIC0;
+	} else if (0 == strcmp(be, "DMic1")) {
+		b = BE_C_DMIC1;
+	} else if (0 == strcmp(be, "DMic2")) {
+		b = BE_C_DMIC2;
+	} else if (0 == strcmp(be, "Bluetooth")) {
+		b = BE_C_BT;
+	} else {
+		return EINVAL;
+	}
+
+	switch (f) {
+	case FE_C_MM:
+		if (enable) {
+			switch (b) {
+			case BE_C_HSMIC:
+			case BE_C_OBMIC:
+			case BE_C_AUXFM:
+				ret = set_route_by_array(mixer,
+					g_capture_multimedia_amic_enable, 1);
+				break;
+			case BE_C_DMIC0:
+				ret = set_route_by_array(mixer,
+					g_capture_multimedia_dmic0_enable, 1);
+				break;
+			case BE_C_DMIC1:
+				ret = set_route_by_array(mixer,
+					g_capture_multimedia_dmic1_enable, 1);
+				break;
+			case BE_C_DMIC2:
+				ret = set_route_by_array(mixer,
+					g_capture_multimedia_dmic2_enable, 1);
+				break;
+			case BE_C_BT:
+				ret = set_route_by_array(mixer,
+					g_capture_multimedia_bluetooth_enable, 1);
+				break;
+			}
+		} else {
+			ret = set_route_by_array(mixer,
+				g_capture_multimedia_all_disable, 1);
+		}
+		break;
+	case FE_C_MM2:
+		if (enable) {
+			switch (b) {
+			case BE_C_HSMIC:
+			case BE_C_OBMIC:
+			case BE_C_AUXFM:
+				ret = set_route_by_array(mixer,
+					g_capture_multimedia2_amic_enable, 1);
+				break;
+			case BE_C_DMIC0:
+				ret = set_route_by_array(mixer,
+					g_capture_multimedia2_dmic0_enable, 1);
+				break;
+			case BE_C_DMIC1:
+				ret = set_route_by_array(mixer,
+					g_capture_multimedia2_dmic1_enable, 1);
+				break;
+			case BE_C_DMIC2:
+				ret = set_route_by_array(mixer,
+					g_capture_multimedia2_dmic2_enable, 1);
+				break;
+			case BE_C_BT:
+				ret = set_route_by_array(mixer,
+					g_capture_multimedia2_bluetooth_enable, 1);
+				break;
+			}
+		} else {
+			ret = set_route_by_array(mixer,
+				g_capture_multimedia2_all_disable, 1);
+		}
+		break;
+	case FE_C_VX:
+		if (enable) {
+			switch (b) {
+			case BE_C_HSMIC:
+			case BE_C_OBMIC:
+			case BE_C_AUXFM:
+				ret = set_route_by_array(mixer,
+					g_capture_voice_amic_enable, 1);
+				break;
+			case BE_C_DMIC0:
+				ret = set_route_by_array(mixer,
+					g_capture_voice_dmic0_enable, 1);
+				break;
+			case BE_C_DMIC1:
+				ret = set_route_by_array(mixer,
+					g_capture_voice_dmic1_enable, 1);
+				break;
+			case BE_C_DMIC2:
+				ret = set_route_by_array(mixer,
+					g_capture_voice_dmic2_enable, 1);
+				break;
+			case BE_C_BT:
+				ret = set_route_by_array(mixer,
+					g_capture_voice_bluetooth_enable, 1);
+				break;
+			}
+		} else {
+			ret = set_route_by_array(mixer,
+				g_capture_voice_all_disable, 1);
+		}
+		break;
+	default:
+		assert(0);
+	}
+
+	if (ret)
+		return ret;
+
+	switch (b) {
+	case BE_C_HSMIC:
+		if (enable)
+			ret = set_route_by_array(mixer,
+				g_capture_be_headsetmic_enable, 1);
+		else
+			ret = set_route_by_array(mixer,
+				g_capture_be_headsetmic_disable, 1);
+		break;
+	case BE_C_OBMIC:
+		if (enable)
+			ret = set_route_by_array(mixer,
+				g_capture_be_onboardmic_enable, 1);
+		else
+			ret = set_route_by_array(mixer,
+				g_capture_be_onboardmic_disable, 1);
+		break;
+	case BE_C_AUXFM:
+		if (enable)
+			ret = set_route_by_array(mixer,
+				g_capture_be_auxfm_enable, 1);
+		else
+			ret = set_route_by_array(mixer,
+				g_capture_be_auxfm_disable, 1);
+		break;
+	case BE_C_DMIC0:
+		if (enable)
+			ret = set_route_by_array(mixer,
+				g_capture_be_dmic0_enable, 1);
+		else
+			ret = set_route_by_array(mixer,
+				g_capture_be_dmic0_disable, 1);
+		break;
+	case BE_C_DMIC1:
+		if (enable)
+			ret = set_route_by_array(mixer,
+				g_capture_be_dmic1_enable, 1);
+		else
+			ret = set_route_by_array(mixer,
+				g_capture_be_dmic1_disable, 1);
+		break;
+	case BE_C_DMIC2:
+		if (enable)
+			ret = set_route_by_array(mixer,
+				g_capture_be_dmic2_enable, 1);
+		else
+			ret = set_route_by_array(mixer,
+				g_capture_be_dmic2_disable, 1);
+		break;
+	case BE_C_BT:
+		break;
+	default:
+		assert(0);
+	}
+
+	return ret;
+}
+
+static int config(struct mixer *mixer, int direction, const char* fe,
+	const char* be, int enable, int *optional_port)
+{
+	if (direction == AUDIO_DIRECTION_PLAYBACK) {
+		return config_playback(mixer, fe, be, enable, optional_port);
+	} else {
+		return config_capture(mixer, fe, be, enable, optional_port);
+	}
+}

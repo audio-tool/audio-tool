@@ -47,6 +47,7 @@
 
 #include "card-omap-common-4-5.h"
 
+
 static int probe(void)
 {
 	int card = -ENODEV;
@@ -65,6 +66,8 @@ static struct audio_tool_card_module g_sdp4430_mod = {
 	.name = CARD_SDP4430_CARD_NAME,
 	.probe = probe,
 	.get_mixer_defaults = get_mixer_defaults,
+	.get_fe_be_names = get_fe_be_names,
+	.config = config,
 };
 
 static void __init init(void)

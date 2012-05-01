@@ -65,6 +65,8 @@ static struct audio_tool_card_module g_omap45_mod = {
 	.name = CARD_OMAP45_CARD_NAME,
 	.probe = probe,
 	.get_mixer_defaults = get_mixer_defaults,
+	.get_fe_be_names = get_fe_be_names,
+	.config = config,
 };
 
 static void __init init(void)
