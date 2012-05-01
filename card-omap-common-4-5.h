@@ -862,7 +862,7 @@ static struct audio_tool_mixer_cache g_card_mix_defaults = {
 static int get_mixer_defaults(struct audio_tool_mixer_cache *cache)
 {
 	struct audio_tool_mixer_cache *defs = &g_card_mix_defaults;
-	size_t m, n;
+	int m, n;
 	int ret = 0;
 
 	mixer_cache_reset_touch(defs);
