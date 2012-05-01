@@ -48,6 +48,7 @@
 #include "save.h"
 #include "restore.h"
 #include "defaults.h"
+#include "config_cmd.h"
 
 /* defined in config.c */
 int parse_args(struct audio_tool_config *config, int *argc, char ***argv);
@@ -98,6 +99,8 @@ int main(int argc, char* argv[])
 			ret = restore_main(&config, argc, argv);
 		} else if (strcmp(argv[0], "defaults") == 0) {
 			ret = defaults_main(&config, argc, argv);
+		} else if (strcmp(argv[0], "config") == 0) {
+			ret = config_cmd_main(&config, argc, argv);
 		} else {
 			usage();
 			ret = 1;

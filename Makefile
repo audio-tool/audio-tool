@@ -53,6 +53,7 @@ LIB_OBJECTS = \
 	module.o \
 	defaults.o \
 	alsa-control.o \
+	config_cmd.o \
 
 MODULES = \
 	card-omap45.o \
@@ -88,6 +89,12 @@ $(LIB): $(LIB_OBJECTS)
 clean: clean_tone_generator
 	-rm -f *.o $(TARGETS)
 	-rm -f cmdline.c cmdline.h
+
+card-omap45.o: card-omap45.c card-omap-common-4-5.h
+	$(TARGETCC) $(TARGETCFLAGS) -o $@ -c $<
+
+card-sdp4430.o: card-sdp4430.c card-omap-common-4-5.h
+	$(TARGETCC) $(TARGETCFLAGS) -o $@ -c $<
 
 ##############################################
 ##
