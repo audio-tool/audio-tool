@@ -41,18 +41,23 @@
 
 /*
  * Code common between cards SDP4430 and OMAP45
+ *
+ * When matching ABE versions, the ABE FW version is attached.
+ *
+ * Symbols are not versioned until versioning is required.
  */
 
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <stdlib.h>
 #include <tinyalsa/asoundlib.h>
 
 #include "alsa-control.h"
 #include "mixer_cache.h"
 
-static struct audio_tool_mixer_control_info g_defaults[] = {
+static struct audio_tool_mixer_control_info g_defaults_common[] = {
 	{
 		.id = -1,
 		.name = "DL1 Equalizer",
@@ -155,42 +160,6 @@ static struct audio_tool_mixer_control_info g_defaults[] = {
 	{
 		.id = -1,
 		.name = "DL1 Capture Playback Volume",
-		.type = MIXER_CTL_TYPE_INT,
-		.num_values = 1,
-		.value.integer = {
-			0,
-		},
-	},
-	{
-		.id = -1,
-		.name = "DL2 Media Playback Volume",
-		.type = MIXER_CTL_TYPE_INT,
-		.num_values = 1,
-		.value.integer = {
-			118,
-		},
-	},
-	{
-		.id = -1,
-		.name = "DL2 Tones Playback Volume",
-		.type = MIXER_CTL_TYPE_INT,
-		.num_values = 1,
-		.value.integer = {
-			0,
-		},
-	},
-	{
-		.id = -1,
-		.name = "DL2 Voice Playback Volume",
-		.type = MIXER_CTL_TYPE_INT,
-		.num_values = 1,
-		.value.integer = {
-			120,
-		},
-	},
-	{
-		.id = -1,
-		.name = "DL2 Capture Playback Volume",
 		.type = MIXER_CTL_TYPE_INT,
 		.num_values = 1,
 		.value.integer = {
@@ -348,15 +317,6 @@ static struct audio_tool_mixer_control_info g_defaults[] = {
 	},
 	{
 		.id = -1,
-		.name = "DL2 Mono Mixer",
-		.type = MIXER_CTL_TYPE_BOOL,
-		.num_values = 1,
-		.value.integer = {
-			0,
-		},
-	},
-	{
-		.id = -1,
 		.name = "AUDUL Mono Mixer",
 		.type = MIXER_CTL_TYPE_BOOL,
 		.num_values = 1,
@@ -376,15 +336,6 @@ static struct audio_tool_mixer_control_info g_defaults[] = {
 	{
 		.id = -1,
 		.name = "DL1 BT_VX Switch",
-		.type = MIXER_CTL_TYPE_BOOL,
-		.num_values = 1,
-		.value.integer = {
-			0,
-		},
-	},
-	{
-		.id = -1,
-		.name = "DL1 PDM Switch",
 		.type = MIXER_CTL_TYPE_BOOL,
 		.num_values = 1,
 		.value.integer = {
@@ -470,42 +421,6 @@ static struct audio_tool_mixer_control_info g_defaults[] = {
 		.num_values = 1,
 		.value.integer = {
 			0,
-		},
-	},
-	{
-		.id = -1,
-		.name = "DL2 Mixer Tones",
-		.type = MIXER_CTL_TYPE_BOOL,
-		.num_values = 1,
-		.value.integer = {
-			0,
-		},
-	},
-	{
-		.id = -1,
-		.name = "DL2 Mixer Voice",
-		.type = MIXER_CTL_TYPE_BOOL,
-		.num_values = 1,
-		.value.integer = {
-			0,
-		},
-	},
-	{
-		.id = -1,
-		.name = "DL2 Mixer Capture",
-		.type = MIXER_CTL_TYPE_BOOL,
-		.num_values = 1,
-		.value.integer = {
-			0,
-		},
-	},
-	{
-		.id = -1,
-		.name = "DL2 Mixer Multimedia",
-		.type = MIXER_CTL_TYPE_BOOL,
-		.num_values = 1,
-		.value.integer = {
-			1,
 		},
 	},
 	{
@@ -854,16 +769,246 @@ static struct audio_tool_mixer_control_info g_defaults[] = {
 	},
 };
 
-static struct audio_tool_mixer_cache g_card_mix_defaults = {
-	.count = sizeof(g_defaults) / sizeof(g_defaults[0]),
-	.ctrls = (struct audio_tool_mixer_control_info*)&g_defaults,
+static struct audio_tool_mixer_control_info g_defaults_0951[] = {
+	{
+		.id = -1,
+		.name = "DL2 Media Playback Volume",
+		.type = MIXER_CTL_TYPE_INT,
+		.num_values = 1,
+		.value.integer = {
+			118,
+		},
+	},
+	{
+		.id = -1,
+		.name = "DL2 Tones Playback Volume",
+		.type = MIXER_CTL_TYPE_INT,
+		.num_values = 1,
+		.value.integer = {
+			0,
+		},
+	},
+	{
+		.id = -1,
+		.name = "DL2 Voice Playback Volume",
+		.type = MIXER_CTL_TYPE_INT,
+		.num_values = 1,
+		.value.integer = {
+			120,
+		},
+	},
+	{
+		.id = -1,
+		.name = "DL2 Capture Playback Volume",
+		.type = MIXER_CTL_TYPE_INT,
+		.num_values = 1,
+		.value.integer = {
+			0,
+		},
+	},
+	{
+		.id = -1,
+		.name = "DL2 Mono Mixer",
+		.type = MIXER_CTL_TYPE_BOOL,
+		.num_values = 1,
+		.value.integer = {
+			0,
+		},
+	},
+	{
+		.id = -1,
+		.name = "DL1 PDM Switch",
+		.type = MIXER_CTL_TYPE_BOOL,
+		.num_values = 1,
+		.value.integer = {
+			0,
+		},
+	},
+	{
+		.id = -1,
+		.name = "DL2 Mixer Tones",
+		.type = MIXER_CTL_TYPE_BOOL,
+		.num_values = 1,
+		.value.integer = {
+			0,
+		},
+	},
+	{
+		.id = -1,
+		.name = "DL2 Mixer Voice",
+		.type = MIXER_CTL_TYPE_BOOL,
+		.num_values = 1,
+		.value.integer = {
+			0,
+		},
+	},
+	{
+		.id = -1,
+		.name = "DL2 Mixer Capture",
+		.type = MIXER_CTL_TYPE_BOOL,
+		.num_values = 1,
+		.value.integer = {
+			0,
+		},
+	},
+	{
+		.id = -1,
+		.name = "DL2 Mixer Multimedia",
+		.type = MIXER_CTL_TYPE_BOOL,
+		.num_values = 1,
+		.value.integer = {
+			1,
+		},
+	},
 };
+
+static struct audio_tool_mixer_control_info g_defaults_0956[] = {
+	{
+		.id = -1,
+		.name = "DL1 PDM_DL2 Switch",
+		.type = MIXER_CTL_TYPE_BOOL,
+		.num_values = 1,
+		.value.integer = {
+			1,
+		},
+	},
+	{
+		.id = -1,
+		.name = "DL1 PDM_DL1 Switch",
+		.type = MIXER_CTL_TYPE_BOOL,
+		.num_values = 1,
+		.value.integer = {
+			0,
+		},
+	},
+	{
+		.id = -1,
+		.name = "PLL Selection",
+		.type = MIXER_CTL_TYPE_ENUM,
+		.num_values = 1,
+		.value.enumerated = {
+			"Low-Power",
+			"",
+			"",
+			"",
+		},
+	},
+	{
+		.id = -1,
+		.name = "AUXR Playback Switch",
+		.type = MIXER_CTL_TYPE_BOOL,
+		.num_values = 1,
+		.value.integer = {
+			0,
+		},
+	},
+	{
+		.id = -1,
+		.name = "AUXL Playback Switch",
+		.type = MIXER_CTL_TYPE_BOOL,
+		.num_values = 1,
+		.value.integer = {
+			0,
+		},
+	},
+	{
+		.id = -1,
+		.name = "Vibra Right Playback",
+		.type = MIXER_CTL_TYPE_ENUM,
+		.num_values = 1,
+		.value.enumerated = {
+			"Input FF",
+			"",
+			"",
+			"",
+		},
+	},
+	{
+		.id = -1,
+		.name = "Vibra Left Playback",
+		.type = MIXER_CTL_TYPE_ENUM,
+		.num_values = 1,
+		.value.enumerated = {
+			"Input FF",
+			"",
+			"",
+			"",
+		},
+	},
+};
+
+#define ABE_API_NULL 0L
+#define ABE_API_0951 951L
+#define ABE_API_0956 956L
+
+static int g_abe_api = ABE_API_NULL;
+
+static struct audio_tool_mixer_cache g_card_mix_defaults = {
+	.count = 0,
+	.ctrls = 0,
+};
+
+/* side effects: initializes g_abe_api and g_card_mix_defaults */
+static int detect_abe_api(struct audio_tool_mixer_cache *cache)
+{
+	int abe_api = ABE_API_0951;
+	int count = 0;
+	int n;
+
+	/* Detect if using 09.56 API */
+	for (n = 0 ; n < cache->count ; ++n) {
+		if (0 == strcmp("DL1 PDM_DL2 Switch", cache->ctrls[n].name)) {
+			abe_api = ABE_API_0956;
+			break;
+		}
+	}
+
+	count = sizeof(g_defaults_common) / sizeof(g_defaults_common[0]);
+	switch (abe_api) {
+	case ABE_API_0951:
+		count += sizeof(g_defaults_0951) / sizeof(g_defaults_0951[0]);
+		break;
+	case ABE_API_0956:
+		count += sizeof(g_defaults_0956) / sizeof(g_defaults_0956[0]);
+		break;
+	default:
+		assert(0);
+	}
+
+	g_card_mix_defaults.ctrls = calloc(count, sizeof(struct audio_tool_mixer_control_info));
+	memcpy(g_card_mix_defaults.ctrls, &g_defaults_common, sizeof(g_defaults_common));
+	n = sizeof(g_defaults_common) / sizeof(g_defaults_common[0]);
+	switch (abe_api) {
+	case ABE_API_0951:
+		memcpy(g_card_mix_defaults.ctrls + n, &g_defaults_0951, sizeof(g_defaults_0951));
+		break;
+	case ABE_API_0956:
+		memcpy(g_card_mix_defaults.ctrls + n, &g_defaults_0956, sizeof(g_defaults_0956));
+		break;
+	default:
+		assert(0);
+	}
+
+	g_card_mix_defaults.count = count;
+	g_abe_api = abe_api;
+
+
+	/* initialize static id's */
+	for (n = 0 ; n < g_card_mix_defaults.count ; ++n) {
+		g_card_mix_defaults.ctrls[n].id = n;
+	}
+
+	return 0;
+}
 
 static int get_mixer_defaults(struct audio_tool_mixer_cache *cache)
 {
 	struct audio_tool_mixer_cache *defs = &g_card_mix_defaults;
 	int m, n;
 	int ret = 0;
+
+	if (g_abe_api == ABE_API_NULL)
+		detect_abe_api(cache);
 
 	mixer_cache_reset_touch(defs);
 	mixer_cache_reset_touch(cache);
@@ -882,14 +1027,14 @@ static int get_mixer_defaults(struct audio_tool_mixer_cache *cache)
 			continue;
 		}
 		memcpy(&cache->ctrls[m].value, &defs->ctrls[n].value,
-		       sizeof(g_defaults[0].value));
+		       sizeof(g_defaults_common[0].value));
 
 		mixer_cache_touch(cache, m);
 		mixer_cache_touch(defs, n);
 	}
 
-	ret = mixer_cache_audit_touch(cache, 1) ? ret : 1;
-	ret = mixer_cache_audit_touch(defs, 1) ? ret : 1;
+	ret = mixer_cache_audit_touch(cache, 1) ? 1 : ret;
+	ret = mixer_cache_audit_touch(defs, 1) ? 1 : ret;
 
 	return ret;
 }

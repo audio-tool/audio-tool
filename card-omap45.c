@@ -71,17 +71,12 @@ static struct audio_tool_card_module g_omap45_mod = {
 
 static void __init init(void)
 {
-	int ret, n;
+	int ret;
 
 	ret = audio_tool_module_register((struct audio_tool_module*)&g_omap45_mod); 
 	if (ret) {
 		fprintf(stderr, "Error: could not register module %s (%s)\n",
 			g_omap45_mod.name, strerror(ret));
-	}
-
-	/* initialize static id's */
-	for (n = 0 ; n < g_card_mix_defaults.count ; ++n) {
-		g_card_mix_defaults.ctrls[n].id = n;
 	}
 }
 
