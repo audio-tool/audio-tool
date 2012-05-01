@@ -119,5 +119,5 @@ mixer_cache_err:
 	mixer_close(mixer);
 end:
 
-	return 1;
+	return ret;
 }
