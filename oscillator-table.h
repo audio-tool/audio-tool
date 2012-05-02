@@ -43,17 +43,19 @@ struct wave_scale {
 	uint16_t sub_shift; /* denominator shift, sub_den = (1 << sub_shift) - 1 */
 };
 
+#define STATIC_ARRAY_SIZE(ra) (sizeof(ra)/sizeof(ra[0]))
+
 #define DECLARE_TABLE(t_name, t_data)					\
 	{								\
 		.name = (t_name),					\
-		.length = sizeof(t_data) / sizeof(int16_t),		\
-		.mask = (sizeof(t_data)/sizeof(int16_t)) - 1,		\
+		.length = STATIC_ARRAY_SIZE(t_data),			\
+		.mask = STATIC_ARRAY_SIZE(t_data) - 1,			\
 		.data = (t_data),					\
 	}
 
-int oscillator_table_render(int16_t *out, struct wave_table *tbl, uint32_t offset,
-		uint16_t count, const struct wave_scale wave_scale, uint8_t channel,
-		uint32_t channel_mask, uint16_t vol_frac);
+int oscillator_table_render(void *out, struct wave_table *tbl, uint32_t offset,
+		uint16_t count, const struct wave_scale wave_scale, uint8_t channels,
+		uint32_t channel_mask, uint16_t vol_frac, int bits);
 
 #endif /* __LIBGABE_OSCILLATOR_TABLE_H__ */
 

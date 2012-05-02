@@ -39,6 +39,56 @@
 
 /*#define CHECK_MATH*/
 
+typedef void (*write_to_buffer_func_t)(void *out, uint16_t frame, uint8_t channels,
+				       uint8_t channel, int16_t value);
+
+inline void write_s16_to_s8(void *out, uint16_t frame, uint8_t channels,
+				       uint8_t channel, int16_t value)
+{
+	int8_t *dest = out;
+	dest[frame * channels + channel] = value >> 8;
+}
+
+inline void write_s16_to_s16(void *out, uint16_t frame, uint8_t channels,
+				       uint8_t channel, int16_t value)
+{
+	int16_t *dest = out;
+	dest[frame * channels + channel] = value;
+}
+
+inline void write_s16_to_s24(void *out, uint16_t frame, uint8_t channels,
+				       uint8_t channel, int16_t value)
+{
+	union s24_t {
+		int32_t v;
+		unsigned char* c[4];
+	} val, *dest;
+	unsigned char *d;
+
+	val.v = value >> 8;
+	d = out;
+	d += 3 * (frame * channels + channel);
+	dest = (union s24_t*)d;
+	dest->c[0] = val.c[0];
+	dest->c[1] = val.c[1];
+	dest->c[2] = val.c[2];
+}
+
+inline void write_s16_to_s32(void *out, uint16_t frame, uint8_t channels,
+				       uint8_t channel, int16_t value)
+{
+	int32_t *dest = out;
+	int64_t tmp = value;
+	int32_t v;
+
+	/* scale 0x7FFF to 0x7FFFFFFF */
+	tmp = (tmp * 0X7FFFFFFF) / 0x7FFF;
+	assert( tmp <= (int64_t)0x7FFFFFFF );
+	assert( (tmp >= 0) || (-tmp <= (int64_t)0x7FFFFFFF ) );
+	v = tmp;
+	dest[frame * channels + channel] = v;
+}
+
 /**
  * \brief render an oscillator table to an output buffer, using the freq specified
  *
@@ -49,12 +99,14 @@
  * \param wave_scale specification of the desired output wavelength
  * \param channels number of output channels in the buffer (range: [1,32])
  * \param clannel_mask mask indicating which channels to write to
+ * \param vol_frac An integer fraction for attenuating the signal
+ * \param format output bits (should be 8, 16, 24, or 32)
  *
  * \returns non-zero on error.
  */
-int oscillator_table_render(int16_t *out, struct wave_table *tbl, uint32_t offset,
+int oscillator_table_render(void *out, struct wave_table *tbl, uint32_t offset,
 		uint16_t count, const struct wave_scale wave_scale, uint8_t channels,
-		uint32_t channel_mask, uint16_t vol_frac)
+		uint32_t channel_mask, uint16_t vol_frac, int bits)
 {
 	int32_t num;
 	const int32_t denom = USHRT_MAX;
@@ -71,10 +123,21 @@ int oscillator_table_render(int16_t *out, struct wave_table *tbl, uint32_t offse
 #ifdef CHECK_MATH
 	uint32_t ck_p, ck_tbl_len, ck_wave_len;
 #endif
+	write_to_buffer_func_t write_to_buffer;
 
 	assert( out );
 	assert( tbl );
 	assert( channels > 0 );
+	assert( 0 == (bits % 8) );
+	assert( bits > 0 );
+	assert( bits <= 32 );
+
+	switch (bits) {
+	case 8: write_to_buffer = write_s16_to_s8; break;
+	case 16: write_to_buffer = write_s16_to_s16; break;
+	case 24: write_to_buffer = write_s16_to_s24; break;
+	case 32: write_to_buffer = write_s16_to_s32; break;
+	}
 
 	num = vol_frac;
 	tbl_len = tbl->length << wave_scale.sub_shift;
@@ -136,8 +199,9 @@ int oscillator_table_render(int16_t *out, struct wave_table *tbl, uint32_t offse
 		val = (val * num) / denom;
 		for (ch = 0, chbit=1 ; ch < channels ; ++ch, chbit <<= 1) {
 			if ( channel_mask & chbit )
-				*out = val;
-			++out;
+				write_to_buffer(out, k, channels, ch, val);
+			else
+				write_to_buffer(out, k, channels, ch, 0);
 		}
 	}
 

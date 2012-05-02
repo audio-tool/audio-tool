@@ -81,10 +81,10 @@ static struct wave_table g_wave_tables[] = {
 
 static int check_wave_tables()
 {
-	assert( sizeof(g_table_square_wave_data) / sizeof(int16_t) <= 0xFFFF );
-	assert( sizeof(g_table_sine_wave_data) / sizeof(int16_t) <= 0xFFFF );
-	assert( sizeof(g_table_triangle_wave_data) / sizeof(int16_t) <= 0xFFFF );
-	assert( sizeof(g_table_sawtooth_wave_data) / sizeof(int16_t) <= 0xFFFF );
+	assert( STATIC_ARRAY_SIZE(g_table_square_wave_data) <= 0xFFFF );
+	assert( STATIC_ARRAY_SIZE(g_table_sine_wave_data) <= 0xFFFF );
+	assert( STATIC_ARRAY_SIZE(g_table_triangle_wave_data) <= 0xFFFF );
+	assert( STATIC_ARRAY_SIZE(g_table_sawtooth_wave_data) <= 0xFFFF );
 
 	return 0;
 }
@@ -98,6 +98,7 @@ struct tone_generator_config {
 	uint32_t duration;
 	int16_t volume; /* binary fraction / USHRT_MAX */
 	uint32_t chan_mask;
+	int bits;
 };
 
 static int inner_main(struct tone_generator_config config)
@@ -105,7 +106,7 @@ static int inner_main(struct tone_generator_config config)
 	struct pcm_config *pcm_config = &config.pcm_config;
 	struct pcm *pcm;
 	unsigned pos;
-	int16_t *buf;
+	void *buf;
 
 	pcm = pcm_open(config.card, config.device, PCM_OUT, pcm_config);
 	if (!pcm) {
@@ -119,8 +120,8 @@ static int inner_main(struct tone_generator_config config)
 		return 1;
 	}
 
-	buf = (int16_t*)calloc(sizeof(int16_t),
-			       pcm_config->period_size * pcm_config->channels);
+	buf = calloc(config.bits / 8,
+			pcm_config->period_size * pcm_config->channels);
 	if (!buf) {
 		fprintf(stderr, "Could not allocate memory for buffer\n");
 		return 1;
@@ -134,10 +135,11 @@ static int inner_main(struct tone_generator_config config)
 			config.wave_scale,
 			pcm_config->channels,
 			config.chan_mask, /* write to all channels */
-			config.volume);
+			config.volume,
+			config.bits);
 		if (pcm_write(pcm,
 			      buf,
-			      pcm_config->channels * pcm_config->period_size * sizeof(int16_t))) {
+			      pcm_config->channels * pcm_config->period_size * (config.bits/8))) {
 			fprintf(stderr, "Error writing to sound card\n");
 			fprintf(stderr, "%s\n", pcm_get_error(pcm));
 		}
@@ -193,7 +195,14 @@ int tone_generator_main(const struct audio_tool_config *at_config, int argc, cha
 
 	/* Set sane defaults */
 	memset(&pcm_config, 0, sizeof(struct pcm_config));
-	pcm_config.format = PCM_FORMAT_S16_LE;
+	switch (at_config->bits) {
+	case 8: pcm_config.format = PCM_FORMAT_S8; break;
+	case 16: pcm_config.format = PCM_FORMAT_S16_LE; break;
+	case 24: pcm_config.format = PCM_FORMAT_S24_LE; break;
+	case 32: pcm_config.format = PCM_FORMAT_S32_LE; break;
+	default:
+		assert(0);
+	}
 
 	config.device = at_config->device;
 	config.card = at_config->card;
@@ -203,6 +212,7 @@ int tone_generator_main(const struct audio_tool_config *at_config, int argc, cha
 	pcm_config.channels = at_config->channels;
 	config.chan_mask = at_config->channel_mask;
 	config.duration = at_config->duration * pcm_config.rate;
+	config.bits = at_config->bits;
 
 	for (ptr = g_wave_tables ; ptr->name ; ++ptr) {
 		if (strcmp(arg_wave_type, ptr->name) == 0) {
