@@ -91,6 +91,7 @@ TONEGEN_LDFLAGS := $(LDFLAGS)
 TONEGEN_LDLIBS := $(LDLIBS) $(LIB) -lm
 
 TONEGEN_WAVE_LENGTH = 2048
+TONEGEN_WAVE_FORMAT = S16
 TONEGEN_EXE_TARGETS = generate-wave-table \
 	tone-generator
 TONEGEN_TABLE_TARGETS = table_square.c \
@@ -111,7 +112,7 @@ generate-wave-table.o: generate-wave-table.c
 	$(HOSTCC) -c $(HOSTCFLAGS) $(HOSTCFLAGS) -o $@ $^
 
 table_%.c: generate-wave-table
-	./generate-wave-table $* $(TONEGEN_WAVE_LENGTH) > $@
+	./generate-wave-table $* $(TONEGEN_WAVE_LENGTH) $(TONEGEN_WAVE_FORMAT) > $@
 
 tone-generator.o: tone-generator.c $(TONEGEN_TABLE_TARGETS)
 	$(TARGETCC) -c $(TONEGEN_CPPFLAGS) $(TONEGEN_CFLAGS) -o $@ $<
