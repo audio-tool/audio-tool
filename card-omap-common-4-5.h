@@ -1300,6 +1300,12 @@ static struct route_setting g_capture_be_dmic2_mix[] = {
 	RS_NULL,
 };
 
+static struct route_setting g_capture_be_bluetooth_mix[] = {
+	RS_INT("BT UL Volume", 120),
+	RS_INT("DL1 BT_VX Switch", 1),
+	RS_NULL,
+};
+
 /* side effects: initializes g_abe_api and g_card_mix_defaults */
 static int detect_abe_api(struct audio_tool_mixer_cache *cache)
 {
@@ -1729,6 +1735,8 @@ static int config_capture(struct mixer *mixer, const char* fe,
 				g_capture_be_dmic2_mix, enable);
 		break;
 	case BE_C_BT:
+		ret = set_route_by_array(mixer,
+				g_capture_be_bluetooth_mix, enable);
 		break;
 	default:
 		assert(0);
