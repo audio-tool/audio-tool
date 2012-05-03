@@ -61,17 +61,21 @@ inline void write_s16_to_s24(void *out, uint16_t frame, uint8_t channels,
 {
 	union s24_t {
 		int32_t v;
-		unsigned char* c[4];
-	} val, *dest;
+		unsigned char c[4];
+	} val;
+	int64_t tmp = value;
 	unsigned char *d;
 
-	val.v = value >> 8;
+	/* scale 0x7FFF to 0x7FFFFF */
+	tmp = (tmp * 0x7FFFFF) / 0x7FFF;
+	assert( tmp <= (int64_t)0x7FFFFF );
+	assert( (tmp >= 0) || (-tmp <= (int64_t)0x7FFFFF ) );
+	val.v = tmp;
 	d = out;
 	d += 3 * (frame * channels + channel);
-	dest = (union s24_t*)d;
-	dest->c[0] = val.c[0];
-	dest->c[1] = val.c[1];
-	dest->c[2] = val.c[2];
+	d[0] = val.c[0];
+	d[1] = val.c[1];
+	d[2] = val.c[2];
 }
 
 inline void write_s16_to_s32(void *out, uint16_t frame, uint8_t channels,
@@ -82,7 +86,7 @@ inline void write_s16_to_s32(void *out, uint16_t frame, uint8_t channels,
 	int32_t v;
 
 	/* scale 0x7FFF to 0x7FFFFFFF */
-	tmp = (tmp * 0X7FFFFFFF) / 0x7FFF;
+	tmp = (tmp * 0x7FFFFFFF) / 0x7FFF;
 	assert( tmp <= (int64_t)0x7FFFFFFF );
 	assert( (tmp >= 0) || (-tmp <= (int64_t)0x7FFFFFFF ) );
 	v = tmp;
