@@ -769,6 +769,30 @@ static struct audio_tool_mixer_control_info g_defaults_common[] = {
 	},
 };
 
+/* The AUX switch hasn't really been associated to an ABE FW version,
+ * so we check for it specifically.
+ */
+static struct audio_tool_mixer_control_info g_defaults_aux_switch[] = {
+	{
+		.id = -1,
+		.name = "Aux Left Playback Switch",
+		.type = MIXER_CTL_TYPE_BOOL,
+		.num_values = 1,
+		.value.integer = {
+			0,
+		},
+	},
+	{
+		.id = -1,
+		.name = "Aux Right Playback Switch",
+		.type = MIXER_CTL_TYPE_BOOL,
+		.num_values = 1,
+		.value.integer = {
+			0,
+		},
+	},
+};
+
 static struct audio_tool_mixer_control_info g_defaults_0951[] = {
 	{
 		.id = -1,
@@ -1310,6 +1334,7 @@ static struct route_setting g_capture_be_bluetooth_mix[] = {
 static int detect_abe_api(struct audio_tool_mixer_cache *cache)
 {
 	int abe_api = ABE_API_0951;
+	int has_aux_switch = 0;
 	int count = 0;
 	int n;
 
@@ -1321,7 +1346,18 @@ static int detect_abe_api(struct audio_tool_mixer_cache *cache)
 		}
 	}
 
+	/* Detect if have aux switch */
+	for (n = 0 ; n < cache->count ; ++n) {
+		if (0 == strcmp("Aux Left Playback Switch", cache->ctrls[n].name)) {
+			has_aux_switch = 1;
+			break;
+		}
+	}
+
 	count = sizeof(g_defaults_common) / sizeof(g_defaults_common[0]);
+	if (has_aux_switch) {
+		count += sizeof(g_defaults_aux_switch) / sizeof(g_defaults_aux_switch[0]);
+	}
 	switch (abe_api) {
 	case ABE_API_0951:
 		count += sizeof(g_defaults_0951) / sizeof(g_defaults_0951[0]);
@@ -1336,6 +1372,11 @@ static int detect_abe_api(struct audio_tool_mixer_cache *cache)
 	g_card_mix_defaults.ctrls = calloc(count, sizeof(struct audio_tool_mixer_control_info));
 	memcpy(g_card_mix_defaults.ctrls, &g_defaults_common, sizeof(g_defaults_common));
 	n = sizeof(g_defaults_common) / sizeof(g_defaults_common[0]);
+	if (has_aux_switch) {
+		memcpy(g_card_mix_defaults.ctrls + n, &g_defaults_aux_switch,
+		       sizeof(g_defaults_aux_switch));
+		n += sizeof(g_defaults_aux_switch) / sizeof(g_defaults_aux_switch[0]);
+	}
 	switch (abe_api) {
 	case ABE_API_0951:
 		memcpy(g_card_mix_defaults.ctrls + n, &g_defaults_0951, sizeof(g_defaults_0951));
