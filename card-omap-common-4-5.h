@@ -1002,6 +1002,8 @@ struct route_setting
  * For Backend := { Headset, Earpiece, Bluetooth }
  */
 static struct route_setting g_playback_multimedia_accessory_mix[] = {
+	RS_INT("Sidetone Mixer Playback", 1),
+	RS_INT("SDT DL Volume", 120),
 	RS_INT("DL1 Mixer Multimedia", 1),
 	RS_INT("DL1 Media Playback Volume", 118),
 	RS_NULL,
@@ -1017,6 +1019,8 @@ static struct route_setting g_playback_multimedia_handsfree_mix_0951[] = {
 	RS_NULL,
 };
 static struct route_setting g_playback_multimedia_handsfree_mix_0956[] = {
+	RS_INT("Sidetone Mixer Playback", 1),
+	RS_INT("SDT DL Volume", 120),
 	RS_INT("DL1 Mixer Multimedia", 1),
 	RS_INT("DL1 Media Playback Volume", 118),
 	RS_NULL,
@@ -1026,6 +1030,8 @@ static struct route_setting g_playback_multimedia_handsfree_mix_0956[] = {
  * For Backend := { Headset, Earpiece, Bluetooth }
  */
 static struct route_setting g_playback_voice_accessory_mix[] = {
+	RS_INT("Sidetone Mixer Playback", 1),
+	RS_INT("SDT DL Volume", 120),
 	RS_INT("DL1 Mixer Voice", 1),
 	RS_INT("DL1 Voice Playback Volume", 118),
 	RS_NULL,
@@ -1041,6 +1047,8 @@ static struct route_setting g_playback_voice_handsfree_mix_0951[] = {
 	RS_NULL,
 };
 static struct route_setting g_playback_voice_handsfree_mix_0956[] = {
+	RS_INT("Sidetone Mixer Playback", 1),
+	RS_INT("SDT DL Volume", 120),
 	RS_INT("DL1 Mixer Voice", 1),
 	RS_INT("DL1 Voice Playback Volume", 118),
 	RS_NULL,
@@ -1050,6 +1058,8 @@ static struct route_setting g_playback_voice_handsfree_mix_0956[] = {
  * For Backend := { Headset, Earpiece, Bluetooth }
  */
 static struct route_setting g_playback_tones_accessory_mix[] = {
+	RS_INT("Sidetone Mixer Playback", 1),
+	RS_INT("SDT DL Volume", 120),
 	RS_INT("DL1 Mixer Tones", 1),
 	RS_INT("DL1 Tones Playback Volume", 118),
 	RS_NULL,
@@ -1065,6 +1075,8 @@ static struct route_setting g_playback_tones_handsfree_mix_0951[] = {
 	RS_NULL,
 };
 static struct route_setting g_playback_tones_handsfree_mix_0956[] = {
+	RS_INT("Sidetone Mixer Playback", 1),
+	RS_INT("SDT DL Volume", 120),
 	RS_INT("DL1 Mixer Tones", 1),
 	RS_INT("DL1 Tones Playback Volume", 118),
 	RS_NULL,
@@ -1072,8 +1084,6 @@ static struct route_setting g_playback_tones_handsfree_mix_0956[] = {
 
 static struct route_setting *g_playback_be_headset_mix = 0;
 static struct route_setting g_playback_be_headset_mix_0951[] = {
-	RS_INT("Sidetone Mixer Playback", 1),
-	RS_INT("SDT DL Volume", 120),
 	RS_INT("DL1 PDM Switch", 1),
 	RS_ENUM("Headset Left Playback", "HS DAC"),
 	RS_ENUM("Headset Right Playback", "HS DAC"),
@@ -1081,8 +1091,6 @@ static struct route_setting g_playback_be_headset_mix_0951[] = {
 	RS_NULL,
 };
 static struct route_setting g_playback_be_headset_mix_0956[] = {
-	RS_INT("Sidetone Mixer Playback", 1),
-	RS_INT("SDT DL Volume", 120),
 	RS_INT("DL1 PDM_DL1 Switch", 1),
 	RS_ENUM("Headset Left Playback", "HS DAC"),
 	RS_ENUM("Headset Right Playback", "HS DAC"),
@@ -1092,16 +1100,12 @@ static struct route_setting g_playback_be_headset_mix_0956[] = {
 
 static struct route_setting *g_playback_be_earpiece_mix = 0;
 static struct route_setting g_playback_be_earpiece_mix_0951[] = {
-	RS_INT("Sidetone Mixer Playback", 1),
-	RS_INT("SDT DL Volume", 120),
 	RS_INT("DL1 PDM Switch", 1),
 	RS_INT("Earphone Playback Switch", 1),
 	RS_INT("Earphone Playback Volume", 13),
 	RS_NULL,
 };
 static struct route_setting g_playback_be_earpiece_mix_0956[] = {
-	RS_INT("Sidetone Mixer Playback", 1),
-	RS_INT("SDT DL Volume", 120),
 	RS_INT("DL1 PDM_DL1 Switch", 1),
 	RS_INT("Earphone Playback Switch", 1),
 	RS_INT("Earphone Playback Volume", 13),
@@ -1109,8 +1113,6 @@ static struct route_setting g_playback_be_earpiece_mix_0956[] = {
 };
 
 static struct route_setting g_playback_be_bluetooth_mix[] = {
-	RS_INT("Sidetone Mixer Playback", 1),
-	RS_INT("SDT DL Volume", 120),
 	RS_INT("DL1 BT_VX Switch", 1),
 	RS_INT("BT UL Volume", 120),
 	RS_NULL,
@@ -1124,8 +1126,6 @@ static struct route_setting g_playback_be_handsfree_mix_0951[] = {
 	RS_NULL,
 };
 static struct route_setting g_playback_be_handsfree_mix_0956[] = {
-	RS_INT("Sidetone Mixer Playback", 1),
-	RS_INT("SDT DL Volume", 120),
 	RS_INT("DL1 PDM_DL1 Switch", 1),
 	RS_ENUM("Handsfree Left Playback", "HF DAC"),
 	RS_ENUM("Handsfree Right Playback", "HF DAC"),
