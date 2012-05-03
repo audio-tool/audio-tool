@@ -1150,7 +1150,7 @@ static struct route_setting g_playback_be_handsfree_mix_0951[] = {
 	RS_NULL,
 };
 static struct route_setting g_playback_be_handsfree_mix_0956[] = {
-	RS_INT("DL1 PDM_DL1 Switch", 1),
+	RS_INT("DL1 PDM_DL2 Switch", 1),
 	RS_ENUM("Handsfree Left Playback", "HF DAC"),
 	RS_ENUM("Handsfree Right Playback", "HF DAC"),
 	RS_INT("Handsfree Playback Volume", 23),
