@@ -344,6 +344,15 @@ static struct audio_tool_mixer_control_info g_defaults_common[] = {
 	},
 	{
 		.id = -1,
+		.name = "DL1 PDM Switch",
+		.type = MIXER_CTL_TYPE_BOOL,
+		.num_values = 1,
+		.value.integer = {
+			0,
+		},
+	},
+	{
+		.id = -1,
 		.name = "Sidetone Mixer Capture",
 		.type = MIXER_CTL_TYPE_BOOL,
 		.num_values = 1,
@@ -841,15 +850,6 @@ static struct audio_tool_mixer_control_info g_defaults_0951[] = {
 	},
 	{
 		.id = -1,
-		.name = "DL1 PDM Switch",
-		.type = MIXER_CTL_TYPE_BOOL,
-		.num_values = 1,
-		.value.integer = {
-			0,
-		},
-	},
-	{
-		.id = -1,
 		.name = "DL2 Mixer Tones",
 		.type = MIXER_CTL_TYPE_BOOL,
 		.num_values = 1,
@@ -894,15 +894,6 @@ static struct audio_tool_mixer_control_info g_defaults_0956[] = {
 		.num_values = 1,
 		.value.integer = {
 			1,
-		},
-	},
-	{
-		.id = -1,
-		.name = "DL1 PDM_DL1 Switch",
-		.type = MIXER_CTL_TYPE_BOOL,
-		.num_values = 1,
-		.value.integer = {
-			0,
 		},
 	},
 	{
@@ -1106,16 +1097,8 @@ static struct route_setting g_playback_tones_handsfree_mix_0956[] = {
 	RS_NULL,
 };
 
-static struct route_setting *g_playback_be_headset_mix = 0;
-static struct route_setting g_playback_be_headset_mix_0951[] = {
+static struct route_setting g_playback_be_headset_mix[] = {
 	RS_INT("DL1 PDM Switch", 1),
-	RS_ENUM("Headset Left Playback", "HS DAC"),
-	RS_ENUM("Headset Right Playback", "HS DAC"),
-	RS_INT("Headset Playback Volume", 13),
-	RS_NULL,
-};
-static struct route_setting g_playback_be_headset_mix_0956[] = {
-	RS_INT("DL1 PDM_DL1 Switch", 1),
 	RS_ENUM("Headset Left Playback", "HS DAC"),
 	RS_ENUM("Headset Right Playback", "HS DAC"),
 	RS_INT("Headset Playback Volume", 13),
@@ -1130,7 +1113,7 @@ static struct route_setting g_playback_be_earpiece_mix_0951[] = {
 	RS_NULL,
 };
 static struct route_setting g_playback_be_earpiece_mix_0956[] = {
-	RS_INT("DL1 PDM_DL1 Switch", 1),
+	RS_INT("DL1 PDM Switch", 1),
 	RS_INT("Earphone Playback Switch", 1),
 	RS_INT("Earphone Playback Volume", 13),
 	RS_NULL,
@@ -1253,30 +1236,35 @@ static struct route_setting g_capture_multimedia2_bluetooth_mix[] = {
 };
 
 static struct route_setting g_capture_voice_amic_mix[] = {
+	RS_INT("Voice Capture Mixer Capture", 1),
 	RS_ENUM("MUX_VX0", "AMic0"),
 	RS_ENUM("MUX_VX1", "AMic1"),
 	RS_NULL,
 };
 
 static struct route_setting g_capture_voice_dmic0_mix[] = {
+	RS_INT("Voice Capture Mixer Capture", 1),
 	RS_ENUM("MUX_VX0", "DMic0L"),
 	RS_ENUM("MUX_VX1", "DMic0R"),
 	RS_NULL,
 };
 
 static struct route_setting g_capture_voice_dmic1_mix[] = {
+	RS_INT("Voice Capture Mixer Capture", 1),
 	RS_ENUM("MUX_VX0", "DMic1L"),
 	RS_ENUM("MUX_VX1", "DMic1R"),
 	RS_NULL,
 };
 
 static struct route_setting g_capture_voice_dmic2_mix[] = {
+	RS_INT("Voice Capture Mixer Capture", 1),
 	RS_ENUM("MUX_VX0", "DMic2L"),
 	RS_ENUM("MUX_VX1", "DMic2R"),
 	RS_NULL,
 };
 
 static struct route_setting g_capture_voice_bluetooth_mix[] = {
+	RS_INT("Voice Capture Mixer Capture", 1),
 	RS_ENUM("MUX_VX0", "BT Left"),
 	RS_ENUM("MUX_VX1", "BT Right"),
 	RS_NULL,
@@ -1403,7 +1391,6 @@ static int detect_abe_api(struct audio_tool_mixer_cache *cache)
 		g_playback_multimedia_handsfree_mix = g_playback_multimedia_handsfree_mix_0951;
 		g_playback_voice_handsfree_mix = g_playback_voice_handsfree_mix_0951;
 		g_playback_tones_handsfree_mix = g_playback_tones_handsfree_mix_0951;
-		g_playback_be_headset_mix = g_playback_be_headset_mix_0951;
 		g_playback_be_earpiece_mix = g_playback_be_earpiece_mix_0951;
 		g_playback_be_handsfree_mix = g_playback_be_handsfree_mix_0951;
 		break;
@@ -1411,7 +1398,6 @@ static int detect_abe_api(struct audio_tool_mixer_cache *cache)
 		g_playback_multimedia_handsfree_mix = g_playback_multimedia_handsfree_mix_0956;
 		g_playback_voice_handsfree_mix = g_playback_voice_handsfree_mix_0956;
 		g_playback_tones_handsfree_mix = g_playback_tones_handsfree_mix_0956;
-		g_playback_be_headset_mix = g_playback_be_headset_mix_0956;
 		g_playback_be_earpiece_mix = g_playback_be_earpiece_mix_0956;
 		g_playback_be_handsfree_mix = g_playback_be_handsfree_mix_0956;
 		break;
