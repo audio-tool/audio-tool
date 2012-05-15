@@ -1632,6 +1632,9 @@ static int config_capture(struct mixer *mixer, const char* fe,
 		return EINVAL;
 	}
 
+	if (optional_port)
+		*optional_port = port;
+
 	if (0 == strcmp(be, "HeadsetMic")) {
 		b = BE_C_HSMIC;
 	} else if (0 == strcmp(be, "OnboardMic")) {
