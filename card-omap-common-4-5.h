@@ -1253,30 +1253,35 @@ static struct route_setting g_capture_multimedia2_bluetooth_mix[] = {
 };
 
 static struct route_setting g_capture_voice_amic_mix[] = {
+	RS_INT("Voice Capture Mixer Capture", 1),
 	RS_ENUM("MUX_VX0", "AMic0"),
 	RS_ENUM("MUX_VX1", "AMic1"),
 	RS_NULL,
 };
 
 static struct route_setting g_capture_voice_dmic0_mix[] = {
+	RS_INT("Voice Capture Mixer Capture", 1),
 	RS_ENUM("MUX_VX0", "DMic0L"),
 	RS_ENUM("MUX_VX1", "DMic0R"),
 	RS_NULL,
 };
 
 static struct route_setting g_capture_voice_dmic1_mix[] = {
+	RS_INT("Voice Capture Mixer Capture", 1),
 	RS_ENUM("MUX_VX0", "DMic1L"),
 	RS_ENUM("MUX_VX1", "DMic1R"),
 	RS_NULL,
 };
 
 static struct route_setting g_capture_voice_dmic2_mix[] = {
+	RS_INT("Voice Capture Mixer Capture", 1),
 	RS_ENUM("MUX_VX0", "DMic2L"),
 	RS_ENUM("MUX_VX1", "DMic2R"),
 	RS_NULL,
 };
 
 static struct route_setting g_capture_voice_bluetooth_mix[] = {
+	RS_INT("Voice Capture Mixer Capture", 1),
 	RS_ENUM("MUX_VX0", "BT Left"),
 	RS_ENUM("MUX_VX1", "BT Right"),
 	RS_NULL,
