@@ -193,7 +193,6 @@ int tone_generator_main(const struct audio_tool_config *at_config, int argc, cha
 
 	/* Set sane defaults */
 	memset(&pcm_config, 0, sizeof(struct pcm_config));
-	pcm_config.format = PCM_FORMAT_S16_LE;
 
 	config.device = at_config->device;
 	config.card = at_config->card;
@@ -201,6 +200,11 @@ int tone_generator_main(const struct audio_tool_config *at_config, int argc, cha
 	pcm_config.period_count = at_config->num_periods;
 	pcm_config.rate = at_config->rate;
 	pcm_config.channels = at_config->channels;
+	if (at_config->bits == 32)
+		pcm_config.format = PCM_FORMAT_S32_LE;
+	else if (at_config->bits == 16)
+		pcm_config.format = PCM_FORMAT_S16_LE;
+
 	config.chan_mask = at_config->channel_mask;
 	config.duration = at_config->duration * pcm_config.rate;
 
