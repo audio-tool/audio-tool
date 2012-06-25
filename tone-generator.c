@@ -142,6 +142,7 @@ static int inner_main(struct tone_generator_config config)
 			      pcm_config->channels * pcm_config->period_size * (config.bits/8))) {
 			fprintf(stderr, "Error writing to sound card\n");
 			fprintf(stderr, "%s\n", pcm_get_error(pcm));
+			break;
 		}
 	}
 
