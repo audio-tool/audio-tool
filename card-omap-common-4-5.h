@@ -994,6 +994,8 @@ static char *g_capture_backends[] = {
 	"DMic1",
 	"DMic2",
 	"Bluetooth",
+	"Echo",
+	"VoiceRec",
 	0,
 };
 
@@ -1205,6 +1207,30 @@ static struct route_setting g_capture_multimedia_bluetooth_mix[] = {
 	RS_NULL,
 };
 
+static struct route_setting g_capture_multimedia_echo_mix[] = {
+	RS_ENUM("MUX_UL00", "Echo Left"),
+	RS_ENUM("MUX_UL01", "Echo Right"),
+	RS_ENUM("MUX_UL02", "None"),
+	RS_ENUM("MUX_UL03", "None"),
+	RS_ENUM("MUX_UL04", "None"),
+	RS_ENUM("MUX_UL05", "None"),
+	RS_ENUM("MUX_UL06", "None"),
+	RS_ENUM("MUX_UL07", "None"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_multimedia_vxrec_mix[] = {
+	RS_ENUM("MUX_UL00", "VX Left"),
+	RS_ENUM("MUX_UL01", "VX Right"),
+	RS_ENUM("MUX_UL02", "None"),
+	RS_ENUM("MUX_UL03", "None"),
+	RS_ENUM("MUX_UL04", "None"),
+	RS_ENUM("MUX_UL05", "None"),
+	RS_ENUM("MUX_UL06", "None"),
+	RS_ENUM("MUX_UL07", "None"),
+	RS_NULL,
+};
+
 static struct route_setting g_capture_multimedia2_amic_mix[] = {
 	RS_ENUM("MUX_UL10", "AMic0"),
 	RS_ENUM("MUX_UL11", "AMic1"),
@@ -1232,6 +1258,18 @@ static struct route_setting g_capture_multimedia2_dmic2_mix[] = {
 static struct route_setting g_capture_multimedia2_bluetooth_mix[] = {
 	RS_ENUM("MUX_UL10", "BT Left"),
 	RS_ENUM("MUX_UL11", "BT Right"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_multimedia2_echo_mix[] = {
+	RS_ENUM("MUX_UL10", "Echo Left"),
+	RS_ENUM("MUX_UL11", "Echo Right"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_multimedia2_vxrec_mix[] = {
+	RS_ENUM("MUX_UL10", "VX Left"),
+	RS_ENUM("MUX_UL11", "VX Right"),
 	RS_NULL,
 };
 
@@ -1267,6 +1305,20 @@ static struct route_setting g_capture_voice_bluetooth_mix[] = {
 	RS_INT("Voice Capture Mixer Capture", 1),
 	RS_ENUM("MUX_VX0", "BT Left"),
 	RS_ENUM("MUX_VX1", "BT Right"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_voice_echo_mix[] = {
+	RS_INT("Voice Capture Mixer Capture", 1),
+	RS_ENUM("MUX_VX0", "Echo Left"),
+	RS_ENUM("MUX_VX1", "Echo Right"),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_voice_vxrec_mix[] = {
+	RS_INT("Voice Capture Mixer Capture", 1),
+	RS_ENUM("MUX_VX0", "VX Left"),
+	RS_ENUM("MUX_VX1", "VX Right"),
 	RS_NULL,
 };
 
@@ -1315,6 +1367,26 @@ static struct route_setting g_capture_be_dmic2_mix[] = {
 static struct route_setting g_capture_be_bluetooth_mix[] = {
 	RS_INT("BT UL Volume", 120),
 	RS_INT("DL1 BT_VX Switch", 1),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_be_echo_mix[] = {
+	RS_INT("Echo Mixer DL1", 1),
+	RS_INT("Echo Mixer DL2", 1),
+	RS_INT("Echo DL1 Volume", 120),
+	RS_INT("Echo DL2 Volume", 120),
+	RS_NULL,
+};
+
+static struct route_setting g_capture_be_vxrec_mix[] = {
+	RS_INT("Capture Mixer Tones", 1),
+	RS_INT("Capture Mixer Voice Playback", 1),
+	RS_INT("Capture Mixer Voice Capture", 1),
+	RS_INT("Capture Mixer Media Playback", 1),
+	RS_INT("VXREC Media Volume", 120),
+	RS_INT("VXREC Tones Volume", 120),
+	RS_INT("VXREC Voice DL Volume", 120),
+	RS_INT("VXREC Voice UL Volume", 120),
 	RS_NULL,
 };
 
@@ -1513,6 +1585,8 @@ static int get_fe_be_names(int direction, char ***fes, char ***bes)
 #define BE_C_DMIC1 4
 #define BE_C_DMIC2 5
 #define BE_C_BT 6
+#define BE_C_ECHO 7
+#define BE_C_VXREC 8
 
 static int config_playback(struct mixer *mixer, const char* fe,
 	const char* be, int enable, int *optional_port)
@@ -1649,6 +1723,10 @@ static int config_capture(struct mixer *mixer, const char* fe,
 		b = BE_C_DMIC2;
 	} else if (0 == strcmp(be, "Bluetooth")) {
 		b = BE_C_BT;
+	} else if (0 == strcmp(be, "Echo")) {
+		b = BE_C_ECHO;
+	} else if (0 == strcmp(be, "VoiceRec")) {
+		b = BE_C_VXREC;
 	} else {
 		return EINVAL;
 	}
@@ -1678,6 +1756,14 @@ static int config_capture(struct mixer *mixer, const char* fe,
 			ret = set_route_by_array(mixer,
 					 g_capture_multimedia_bluetooth_mix, enable);
 			break;
+		case BE_C_ECHO:
+			ret = set_route_by_array(mixer,
+					g_capture_multimedia_echo_mix, enable);
+			break;
+		case BE_C_VXREC:
+			ret = set_route_by_array(mixer,
+					g_capture_multimedia_vxrec_mix, enable);
+			break;
 		}
 		break;
 	case FE_C_MM2:
@@ -1704,6 +1790,14 @@ static int config_capture(struct mixer *mixer, const char* fe,
 			ret = set_route_by_array(mixer,
 					 g_capture_multimedia2_bluetooth_mix, enable);
 			break;
+		case BE_C_ECHO:
+			ret = set_route_by_array(mixer,
+					g_capture_multimedia2_echo_mix, enable);
+			break;
+		case BE_C_VXREC:
+			ret = set_route_by_array(mixer,
+					g_capture_multimedia2_vxrec_mix, enable);
+			break;
 		}
 		break;
 	case FE_C_VX:
@@ -1729,6 +1823,14 @@ static int config_capture(struct mixer *mixer, const char* fe,
 		case BE_C_BT:
 			ret = set_route_by_array(mixer,
 					 g_capture_voice_bluetooth_mix, enable);
+			break;
+		case BE_C_ECHO:
+			ret = set_route_by_array(mixer,
+					g_capture_voice_echo_mix, enable);
+			break;
+		case BE_C_VXREC:
+			ret = set_route_by_array(mixer,
+					g_capture_voice_vxrec_mix, enable);
 			break;
 		}
 		break;
@@ -1767,6 +1869,14 @@ static int config_capture(struct mixer *mixer, const char* fe,
 	case BE_C_BT:
 		ret = set_route_by_array(mixer,
 				g_capture_be_bluetooth_mix, enable);
+		break;
+	case BE_C_ECHO:
+		ret = set_route_by_array(mixer,
+				g_capture_be_echo_mix, enable);
+		break;
+	case BE_C_VXREC:
+		ret = set_route_by_array(mixer,
+				g_capture_be_vxrec_mix, enable);
 		break;
 	default:
 		assert(0);
