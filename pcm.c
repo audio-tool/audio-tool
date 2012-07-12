@@ -382,8 +382,12 @@ int pcm_write(struct pcm *pcm, const void *data, unsigned int count)
         if (ioctl(pcm->fd, SNDRV_PCM_IOCTL_WRITEI_FRAMES, &x)) {
             pcm->running = 0;
             if (errno == EPIPE) {
-                    /* we failed to make our window -- try to restart */
+                /* we failed to make our window -- try to restart if we are
+                 * allowed to do so.  Otherwise, simply allow the EPIPE error to
+                 * propagate up to the app level */
                 pcm->underruns++;
+                if (pcm->flags & PCM_NORESTART)
+                    return -EPIPE;
                 continue;
             }
             return oops(pcm, errno, "cannot write stream data");
@@ -405,7 +409,10 @@ int pcm_read(struct pcm *pcm, void *data, unsigned int count)
 
     for (;;) {
         if (!pcm->running) {
-            pcm_start(pcm);
+            if (pcm_start(pcm) < 0) {
+                fprintf(stderr, "start error");
+                return -errno;
+            }
         }
         if (ioctl(pcm->fd, SNDRV_PCM_IOCTL_READI_FRAMES, &x)) {
             pcm->running = 0;
