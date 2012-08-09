@@ -54,6 +54,7 @@
 #include <stdlib.h>
 #include <tinyalsa/asoundlib.h>
 
+#include "module.h"
 #include "alsa-control.h"
 #include "mixer_cache.h"
 
@@ -1907,4 +1908,67 @@ static int config(struct mixer *mixer, int direction, const char* fe,
 	} else {
 		return config_capture(mixer, fe, be, enable, optional_port);
 	}
+}
+
+/* NULL terminated list: */
+static const char* supported_cards[] = {
+	"OMAP45",
+	"SDP4430",
+	"OMAP5",
+	NULL
+};
+
+static int probe(void)
+{
+	int card = -ENODEV;
+	const char** cardname;
+
+	for (cardname = supported_cards ; *cardname ; ++cardname) {
+		card = ah_card_find_by_name(*cardname);
+
+		if (card >= 0)
+			return 0;
+	}
+
+	return ENODEV;
+
+}
+
+static struct audio_tool_card_module g_omap_abe_mod_template = {
+	.type = AUDIO_TOOL_MOD_TYPE_CARD,
+	.name = "",
+	.probe = probe,
+	.get_mixer_defaults = get_mixer_defaults,
+	.get_fe_be_names = get_fe_be_names,
+	.config = config,
+};
+
+static void __init init(void)
+{
+	const char** cardname;
+	int card;
+	int ret;
+
+	for (cardname = supported_cards ; *cardname ; ++cardname) {
+		card = ah_card_find_by_name(*cardname);
+
+		if (card < 0)
+			continue;
+
+		struct audio_tool_card_module *mod;
+		mod = malloc(sizeof(struct audio_tool_card_module));
+		if (!mod) {
+			fprintf(stderr, "Error: could not allocate memory for module %s\n",
+				*cardname);
+		}
+		*mod = g_omap_abe_mod_template;
+		mod->name = *cardname;
+
+		ret = audio_tool_module_register((struct audio_tool_module*)mod);
+		if (ret) {
+			fprintf(stderr, "Error: could not register module %s (%s)\n",
+				*cardname, strerror(ret));
+		}
+	}
+
 }

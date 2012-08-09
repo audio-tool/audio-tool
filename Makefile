@@ -56,8 +56,7 @@ LIB_OBJECTS = \
 	config_cmd.o \
 
 MODULES = \
-	card-omap45.o \
-	card-sdp4430.o \
+	card-omap-abe.o \
 	card-hdmi.o \
 	card-omap4hdmi.o \
 
