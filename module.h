@@ -38,7 +38,8 @@
 #define __AUDIO_TOOL_MODULE_H__
 
 struct audio_tool_module;
-struct audio_tool_board_module;
+struct audio_tool_card_module;
+struct audio_tool_command_module;
 struct audio_tool_mixer_cache;
 struct mixer;
 
@@ -56,10 +57,15 @@ struct audio_tool_module* audio_tool_get_module(int module_type,
 	const char* optional_name);
 
 /* Module types */
+#define AUDIO_TOOL_MOD_TYPE_ANY		0
 #define AUDIO_TOOL_MOD_TYPE_CARD	1
+#define AUDIO_TOOL_MOD_TYPE_COMMAND	2
 
-#define AUDIO_TOOL_MOD_TYPE_MAX		AUDIO_TOOL_MOD_TYPE_CARD
+#define AUDIO_TOOL_MOD_TYPE_MAX		AUDIO_TOOL_MOD_TYPE_COMMAND
 
+/* The type and the name (together) make the module unique.
+ * However, uniqueness is not enforced.
+ */
 struct audio_tool_module {
 	int type;
 	const char* name;
@@ -92,6 +98,23 @@ struct audio_tool_card_module {
 	/* Required */
 	int (*config)(struct mixer *mixer, int direction, const char* fe,
 		const char* be, int enable, int *optional_port);
+};
+
+/* Module for implementing sub-commands
+ *
+ * The name is the same as the sub-command name.
+ */
+struct audio_tool_command_module {
+	int type;
+	const char* name;
+
+	/* Required: return zero if the module supports the current device */
+	int (*probe)(void);
+
+	/* Required: The main entry point to the command's function
+	 * argc and argv are passed directly from the command line.
+	 */
+	int (*main)(int argc, char* argv[]);
 };
 
 #endif /* __OMAP_AUDIO_TOOL_MODULE_H__ */
