@@ -63,7 +63,7 @@ MODULES = \
 
 all: $(TARGETS)
 
-audio-tool: audio-tool.o config.o cmdline.o $(LIB) $(MODULES)
+audio-tool: main.o config.o cmdline.o $(LIB) $(MODULES)
 	$(TARGETCC) $(TARGETCFLAGS) $(TARGETLDFLAGS) -o $@ $^ $(TARGETLDLIBS)
 
 config.o: config.c cmdline.h
