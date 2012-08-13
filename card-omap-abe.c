@@ -1915,6 +1915,8 @@ static const char* supported_cards[] = {
 	"OMAP45",
 	"SDP4430",
 	"OMAP5",
+	"Tablet44xx",
+	"Panda",
 	NULL
 };
 
