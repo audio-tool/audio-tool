@@ -4,9 +4,9 @@ LIB = libtinyalsa.a
 LINKOPTS := -static
 
 # Versions are 1.0, 1.0.1, 1.0.2, 1.1, 1.1.1, etc.
-VERSION_STR := 1.0.99
+VERSION_STR := 1.1-rc1
 # Version string bytes: 0xMMmmPP (MM=major, mm=minor, PP=patch)
-VERSION := 0x010063
+VERSION := 0x0100F0
 
 HOSTCC := gcc
 HOSTCXX := g++
